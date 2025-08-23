@@ -1,12 +1,23 @@
-from typing import Literal
+from pydantic import BaseModel, Field
 
-from pydantic import BaseModel
-
-
-Status = Literal["ok", "error"]
+from core.constants import ApiStatusEnum
 
 
 class ApiStatus(BaseModel):
-    status: Status
-    detail: str | None = None
+    """Standard API response status model.
 
+    Used for health checks and operation confirmations.
+    """
+
+    status: ApiStatusEnum = Field(..., description="Operation status")
+    detail: str | None = Field(None, description="Additional status information")
+
+
+class HealthResponse(BaseModel):
+    """Health check response with service status details."""
+
+    status: ApiStatusEnum = Field(..., description="Overall health status")
+    services: dict[str, bool] = Field(
+        default_factory=dict, description="Individual service health status"
+    )
+    timestamp: str | None = Field(None, description="Health check timestamp")

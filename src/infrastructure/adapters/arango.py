@@ -1,75 +1,260 @@
-from anyio import to_thread
-from arango import ArangoClient  # type: ignore
+from collections.abc import Sequence
+from typing import final, Any
 
-from application.services import GraphAdapter
+from anyio import to_thread
+from arango import ArangoClient, Database  # type: ignore[attr-defined]
+
+from application.services import GraphAdapterInterface
 from core.config import ArangoConfig
+from core.constants import DatabaseLimits
 from domain.models import Edge, Graph, Node
 
 
-class ArangoAdapter(GraphAdapter):
-    """ArangoDB adapter.
+@final
+class ArangoAdapter(GraphAdapterInterface):  # type: ignore[misc]
+    """ArangoDB adapter for graph data retrieval.
 
-    Supports two modes:
-    - Explicit collections: vertex_collection + edge_collection
-    - Graph name: iterate vertex/edge collections from a named graph
+    This adapter supports two operational modes:
+    1. Explicit collections: Uses specified vertex and edge collections
+    2. Graph mode: Discovers collections from a named ArangoDB graph
 
-    Note: python-arango is synchronous; we offload I/O to a threadpool to keep the event loop responsive.
+    Since python-arango is synchronous, all database operations are
+    offloaded to a thread pool to maintain async compatibility.
+
+    Attributes:
+        _config: ArangoDB connection configuration
+        _client: ArangoDB client instance
+        _database: Connected database instance
     """
 
-    def __init__(self, cfg: ArangoConfig):
-        self._cfg = cfg
-        self._client = ArangoClient(hosts=cfg.url)
-        self._db = self._client.db(cfg.db, username=cfg.user, password=cfg.password)
+    def __init__(self, config: ArangoConfig) -> None:
+        """Initialize ArangoDB adapter with configuration.
+
+        Args:
+            config: ArangoDB connection and collection configuration
+        """
+        self._config = config
+        self._client = ArangoClient(hosts=config.url)
+        self._database: Database = self._client.db(
+            config.db,
+            username=config.user,
+            password=config.password
+        )
 
     async def get_graph(self) -> Graph:
-        # Prepare collections to query (sync, trivial)
-        if self._cfg.vertex_collection and self._cfg.edge_collection:
-            v_cols = [self._cfg.vertex_collection]
-            e_cols = [self._cfg.edge_collection]
-        elif self._cfg.graph:
-            graph = self._db.graph(self._cfg.graph)
-            edge_defs = graph.edge_definitions()
-            v_set: set[str] = set()
-            e_cols = [d["edge_collection"] for d in edge_defs]
-            for d in edge_defs:
-                v_set.update(d.get("from_vertex_collections", []))
-                v_set.update(d.get("to_vertex_collections", []))
-            v_cols = list(v_set)
-        else:
-            # nothing configured
+        """Retrieve graph data from ArangoDB.
+
+        Returns:
+            Graph object containing nodes and edges from collections
+
+        Raises:
+            Exception: If database connection or queries fail
+        """
+        vertex_collections, edge_collections = await self._discover_collections()
+
+        if not vertex_collections and not edge_collections:
             return Graph(nodes=[], edges=[])
 
-        def _load_vertices() -> dict[str, Node]:
-            nodes: dict[str, Node] = {}
-            for coll in v_cols:
-                cursor = self._db.aql.execute(f"FOR v IN {coll} LIMIT 1000 RETURN v")
-                for doc in cursor:  # type: ignore[reportUnknownVariableType]
-                    _id = doc.get("_id")
-                    if not _id or _id in nodes:
-                        continue
-                    label = str(doc.get("name") or doc.get("label") or _id.split("/")[-1])
-                    node_type = _id.split("/")[0]
-                    props = {k: v for k, v in doc.items() if not k.startswith("_")}
-                    nodes[_id] = Node(id=_id, label=label, type=node_type, props=props)
-            return nodes
+        # Execute database operations in thread pool
+        nodes = await to_thread.run_sync(
+            lambda: self._fetch_vertices(vertex_collections)
+        )
+        edges = await to_thread.run_sync(
+            lambda: self._fetch_edges(edge_collections)
+        )
 
-        def _load_edges() -> list[Edge]:
-            edges: list[Edge] = []
-            for coll in e_cols:
-                cursor = self._db.aql.execute(f"FOR e IN {coll} LIMIT 2000 RETURN e")
-                for doc in cursor:  # type: ignore[reportUnknownVariableType]
-                    _id = doc.get("_id")
-                    _from = doc.get("_from")
-                    _to = doc.get("_to")
-                    if not (_id and _from and _to):
-                        continue
-                    label = str(doc.get("label") or coll)
-                    etype = coll
-                    props = {k: v for k, v in doc.items() if not k.startswith("_")}
-                    edges.append(Edge(id=_id, source=_from, target=_to, label=label, type=etype, props=props))
-            return edges
-
-        # Offload blocking I/O to threadpool via zero-arg lambdas
-        nodes = await to_thread.run_sync(lambda: _load_vertices())
-        edges = await to_thread.run_sync(lambda: _load_edges())
         return Graph(nodes=list(nodes.values()), edges=edges)
+
+    async def health_check(self) -> bool:
+        """Check if ArangoDB is accessible and responsive.
+
+        Returns:
+            True if database connection and queries work
+        """
+        try:
+            # Test database connectivity in thread pool
+            def test_connection() -> bool:
+                try:
+                    collections = self._database.collections()
+                    return isinstance(collections, list)
+                except Exception:
+                    return False
+
+            return await to_thread.run_sync(test_connection)
+        except Exception:
+            return False
+
+    async def _discover_collections(self) -> tuple[list[str], list[str]]:
+        """Discover vertex and edge collections to query.
+
+        Returns:
+            Tuple of (vertex_collections, edge_collections) lists
+        """
+
+        def discover() -> tuple[list[str], list[str]]:
+            # Mode 1: Explicit collections specified
+            if self._config.vertex_collection and self._config.edge_collection:
+                return (
+                    [self._config.vertex_collection],
+                    [self._config.edge_collection]
+                )
+
+            # Mode 2: Discover from named graph
+            if self._config.graph:
+                try:
+                    graph = self._database.graph(self._config.graph)
+                    edge_definitions = graph.edge_definitions()
+
+                    vertex_collections: set[str] = set()
+                    edge_collections = [defn["edge_collection"] for defn in edge_definitions]
+
+                    for defn in edge_definitions:
+                        vertex_collections.update(defn.get("from_vertex_collections", []))
+                        vertex_collections.update(defn.get("to_vertex_collections", []))
+
+                    return (list(vertex_collections), edge_collections)
+                except Exception:
+                    # Graph doesn't exist or other error
+                    return ([], [])
+
+            # No configuration available
+            return ([], [])
+
+        return await to_thread.run_sync(discover)
+
+    def _fetch_vertices(self, collections: Sequence[str]) -> dict[str, Node]:
+        """Fetch vertex documents from specified collections.
+
+        Args:
+            collections: List of vertex collection names
+
+        Returns:
+            Dictionary mapping document IDs to Node objects
+        """
+        nodes: dict[str, Node] = {}
+
+        for collection_name in collections:
+            try:
+                query = f"""
+                FOR vertex IN {collection_name}
+                LIMIT {DatabaseLimits.ARANGO_NODE_LIMIT}
+                RETURN vertex
+                """
+
+                cursor = self._database.aql.execute(query)
+
+                for document in cursor:
+                    doc_id = document.get("_id")
+                    if not doc_id or doc_id in nodes:
+                        continue
+
+                    # Extract meaningful label
+                    label = self._extract_label(document, doc_id)
+
+                    # Extract node type from collection name
+                    node_type = doc_id.split("/")[0]
+
+                    # Clean properties (exclude system fields)
+                    props = self._clean_document_properties(document)
+
+                    nodes[doc_id] = Node(
+                        id=doc_id,
+                        label=label,
+                        type=node_type,
+                        props=props
+                    )
+
+            except Exception:
+                # Skip problematic collections
+                continue
+
+        return nodes
+
+    def _fetch_edges(self, collections: Sequence[str]) -> list[Edge]:
+        """Fetch edge documents from specified collections.
+
+        Args:
+            collections: List of edge collection names
+
+        Returns:
+            List of Edge objects
+        """
+        edges: list[Edge] = []
+
+        for collection_name in collections:
+            try:
+                query = f"""
+                FOR edge IN {collection_name}
+                LIMIT {DatabaseLimits.ARANGO_EDGE_LIMIT}
+                RETURN edge
+                """
+
+                cursor = self._database.aql.execute(query)
+
+                for document in cursor:
+                    doc_id = document.get("_id")
+                    from_id = document.get("_from")
+                    to_id = document.get("_to")
+
+                    if not (doc_id and from_id and to_id):
+                        continue
+
+                    # Extract label and type
+                    label = str(document.get("label", collection_name))
+                    edge_type = collection_name
+
+                    # Clean properties
+                    props = self._clean_document_properties(document)
+
+                    edges.append(
+                        Edge(
+                            id=doc_id,
+                            source=from_id,
+                            target=to_id,
+                            label=label,
+                            type=edge_type,
+                            props=props
+                        )
+                    )
+
+            except Exception:
+                # Skip problematic collections
+                continue
+
+        return edges
+
+    @staticmethod
+    def _extract_label(document: dict[str, Any], fallback_id: str) -> str:
+        """Extract a meaningful label from document fields.
+
+        Args:
+            document: ArangoDB document
+            fallback_id: Fallback ID if no label fields found
+
+        Returns:
+            Human-readable label string
+        """
+        # Try common label fields in order of preference
+        for field in ("name", "label", "title"):
+            value = document.get(field)
+            if value:
+                return str(value)
+
+        # Fall back to extracting key from document ID
+        return fallback_id.split("/")[-1]
+
+    @staticmethod
+    def _clean_document_properties(document: dict[str, Any]) -> dict[str, Any]:
+        """Remove system fields from ArangoDB document.
+
+        Args:
+            document: Raw ArangoDB document
+
+        Returns:
+            Clean properties dictionary without system fields
+        """
+        return {
+            key: value
+            for key, value in document.items()
+            if not key.startswith("_")
+        }

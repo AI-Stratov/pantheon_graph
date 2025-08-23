@@ -1,12 +1,14 @@
 from typing import Any
 
-from application.ports import GraphCache
-from application.services import GraphAggregator, GraphAdapter
+import redis.asyncio as redis
+
+from application.ports import GraphCacheInterface
+from application.services import GraphAggregator, GraphAdapterInterface
 from core.config import settings
 
 
-def build_adapters() -> list[GraphAdapter]:
-    adapters: list[GraphAdapter] = []
+def build_adapters() -> list[GraphAdapterInterface]:
+    adapters: list[GraphAdapterInterface] = []
     if settings.enable_memory_adapter:
         from infrastructure.adapters.memory import MemoryAdapter
 
@@ -26,11 +28,12 @@ def build_adapters() -> list[GraphAdapter]:
     return adapters
 
 
-def build_cache() -> GraphCache:
+def build_cache() -> GraphCacheInterface:
     if settings.redis_dsn:
         from infrastructure.cache.redis import RedisGraphCache
 
-        return RedisGraphCache(settings.redis_dsn)
+        redis_client = redis.from_url(settings.redis_dsn, decode_responses=True)  # type: ignore[no-untyped-call]
+        return RedisGraphCache(redis_client)
     from infrastructure.cache.memory import MemoryGraphCache
 
     return MemoryGraphCache()
@@ -38,14 +41,13 @@ def build_cache() -> GraphCache:
 
 # TaskIQ broker configuration
 try:
-    from taskiq_redis import RedisBroker  # type: ignore
+    from taskiq_redis import RedisStreamBroker
 except Exception as exc:  # pragma: no cover - defensive
     raise RuntimeError(
         "taskiq-redis is required to run worker. Install optional deps and configure Redis."
     ) from exc
 
-
-broker = RedisBroker(settings.redis_dsn or "redis://localhost:6379/0")
+broker = RedisStreamBroker(settings.redis_dsn or "redis://localhost:6379/0")
 
 
 @broker.task

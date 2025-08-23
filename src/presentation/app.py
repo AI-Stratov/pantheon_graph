@@ -1,10 +1,11 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.responses import ORJSONResponse
-from fastapi.middleware.cors import CORSMiddleware
+from typing import AsyncGenerator
 
-from dishka.integrations.fastapi import setup_dishka, FastapiProvider
 from dishka import make_async_container
+from dishka.integrations.fastapi import setup_dishka, FastapiProvider
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import ORJSONResponse
 
 from core.config import settings
 from infrastructure.di import AppProvider
@@ -13,9 +14,11 @@ from presentation.web import router as web_router
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
-    await app.state.dishka_container.close()
+    container = getattr(app.state, 'dishka_container', None)
+    if container is not None:
+        await container.close()
 
 
 def create_app() -> FastAPI:
