@@ -16,9 +16,8 @@ from presentation.web import router as web_router
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
-    container = getattr(app.state, 'dishka_container', None)
-    if container is not None:
-        await container.close()
+    if hasattr(app.state, 'dishka_container'):
+        await app.state.dishka_container.close()
 
 
 def create_app() -> FastAPI:
@@ -27,9 +26,9 @@ def create_app() -> FastAPI:
         default_response_class=ORJSONResponse,
         lifespan=lifespan
     )
-
     container = make_async_container(AppProvider(), FastapiProvider())
     setup_dishka(container, app)
+    app.state.dishka_container = container
 
     # Enable CORS only if origins configured
     if settings.cors_origins:
