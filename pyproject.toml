@@ -1,0 +1,52 @@
+[project]
+name = "pantheon-graph"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.116.1",
+    "uvicorn[standard]>=0.35.0",
+    "pydantic>=2.10.1",
+    "pydantic-settings>=2.10.0",
+    "dishka>=1.6.0",
+    "taskiq>=0.11.18",
+    "taskiq-redis>=1.1.0",
+    "neo4j>=5.28.2",
+    "python-arango>=8.2.2",
+    "httpx>=0.28.1",
+    "redis>=6.4.0",
+    "orjson>=3.11.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.12.10",
+    "mypy>=1.17.1",
+    "pytest>=8.4.1",
+    "pre-commit>=4.3.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "UP", "ASYNC", "B", "C4", "PIE", "Q", "RUF",
+]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unreachable = true
+no_implicit_optional = true
+pretty = true
+ignore_missing_imports = true
