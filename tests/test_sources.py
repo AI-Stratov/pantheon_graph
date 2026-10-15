@@ -90,6 +90,8 @@ async def test_wikidata_normalizes_nodes_and_edges() -> None:
     kinds = {node.id: node.kind for node in graph.nodes}
     assert kinds == {'Q34201': 'god', 'Q35500': 'goddess', 'Q40901': 'deity'}
     assert graph.node('Q34201').properties['description'] == 'king of the gods'
+    assert graph.node('Q35500').properties['gender'] == 'female'
+    assert 'gender' not in graph.node('Q40901').properties
     # the symmetric spouse statement collapses to one edge, "child P22 father" is flipped
     assert {(e.source, e.target, e.kind, e.label) for e in graph.edges} == {
         ('Q34201', 'Q35500', 'spouse', 'spouse'),

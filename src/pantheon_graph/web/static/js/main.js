@@ -104,7 +104,7 @@ class PantheonView {
     }));
     const edges = graph.edges.map(({ properties, ...edge }) => {
       const { color, line, arrow } = edgeStyle(edge.kind);
-      return { group: 'edges', data: { ...properties, ...edge, color, line, arrow } };
+      return { group: 'edges', data: { ...properties, ...edge, display: edge.label ?? edge.kind, color, line, arrow } };
     });
 
     this.#cy.batch(() => {

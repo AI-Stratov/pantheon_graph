@@ -9,7 +9,7 @@ from pantheon_graph.infrastructure.sources._common import relation_edge
 
 GREEK_DEITY = 'Q22989102'
 ZEUS = 'Q34201'
-GENDER_KIND = {'Q6581097': NodeKind.GOD, 'Q6581072': NodeKind.GODDESS}
+GENDERS = {'Q6581097': ('male', NodeKind.GOD), 'Q6581072': ('female', NodeKind.GODDESS)}
 
 # Wikidata property -> (relation, label, whether the statement points child -> parent)
 PROPERTIES: dict[str, tuple[Relation, str, bool]] = {
@@ -62,12 +62,10 @@ class WikidataSource:
             properties = {'source': self.name, 'url': f'https://www.wikidata.org/wiki/{qid}'}
             if description := row.get('itemDescription'):
                 properties['description'] = description
-            nodes[qid] = Node(
-                id=qid,
-                label=label,
-                kind=GENDER_KIND.get(_match(_QID, row.get('gender')) or '', NodeKind.DEITY),
-                properties=properties,
-            )
+            kind = NodeKind.DEITY
+            if gender := GENDERS.get(_match(_QID, row.get('gender')) or ''):
+                properties['gender'], kind = gender
+            nodes[qid] = Node(id=qid, label=label, kind=kind, properties=properties)
         return nodes
 
     async def _fetch_edges(self, qids: list[str]) -> list[Edge]:

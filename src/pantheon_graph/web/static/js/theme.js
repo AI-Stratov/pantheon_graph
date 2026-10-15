@@ -75,7 +75,21 @@ export function stylesheet() {
     },
     {
       selector: 'edge.labelled',
-      style: { label: 'data(label)', color: text, 'font-size': 9, 'text-rotation': 'autorotate' },
+      style: {
+        label: 'data(display)',
+        color: cssVar('--muted'),
+        'font-size': 10,
+        'font-weight': 600,
+        'text-rotation': 'none',
+        'text-background-color': cssVar('--panel'),
+        'text-background-opacity': 1,
+        'text-background-padding': 4,
+        'text-background-shape': 'roundrectangle',
+        'text-border-color': cssVar('--border'),
+        'text-border-width': 1,
+        'text-border-opacity': 1,
+        'z-index': 5,
+      },
     },
     { selector: 'node:selected', style: { 'border-width': 3, 'border-color': cssVar('--accent') } },
     { selector: '.faded', style: { opacity: 0.12 } },
@@ -85,7 +99,24 @@ export function stylesheet() {
     },
     {
       selector: 'edge.on-path',
-      style: { width: 4, 'line-color': cssVar('--accent'), 'target-arrow-color': cssVar('--accent'), 'z-index': 10 },
+      style: {
+        width: 4,
+        'line-color': cssVar('--accent'),
+        'target-arrow-color': cssVar('--accent'),
+        color: '#fff',
+        'text-background-color': cssVar('--accent'),
+        'text-border-width': 0,
+        'z-index': 10,
+      },
+    },
+    {
+      selector: 'node.hovered',
+      style: {
+        'underlay-color': cssVar('--accent'),
+        'underlay-opacity': 0.25,
+        'underlay-padding': 10,
+        'underlay-shape': 'ellipse',
+      },
     },
     { selector: '.hidden', style: { display: 'none' } },
   ];
