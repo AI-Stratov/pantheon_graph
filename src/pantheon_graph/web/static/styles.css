@@ -130,7 +130,7 @@ h2 {
   &:hover { background: var(--border); }
 }
 
-#details-title {
+.title {
   margin: 4px 32px 6px 0;
   color: var(--text);
   font-size: 20px;
@@ -173,4 +173,56 @@ a { color: var(--accent); }
 @media (width <= 900px) {
   .sidebar { display: none; }
   .details { position: absolute; inset: 0 0 0 auto; z-index: 10; max-width: 90vw; }
+}
+
+.small { font-size: 12px; }
+
+kbd {
+  padding: 0 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  font: 11px ui-monospace, monospace;
+}
+
+.intro p { margin: 4px 0 8px; }
+
+.examples {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  & button {
+    width: 100%;
+    padding: 6px 10px;
+    background: var(--chip);
+    color: var(--text);
+    text-align: left;
+    &:hover { background: var(--accent); color: #fff; }
+  }
+}
+
+.path-form {
+  margin: 4px 0 8px;
+  & label { display: block; margin-bottom: 4px; color: var(--muted); }
+  & .row { display: flex; gap: 6px; }
+}
+
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  & li.node button {
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--color);
+    font-weight: 600;
+  }
+  & li.relation {
+    margin: 2px 0 2px 14px;
+    padding: 4px 0 4px 14px;
+    border-left: 2px dashed var(--border);
+    color: var(--muted);
+  }
 }

@@ -79,6 +79,14 @@ export function stylesheet() {
     },
     { selector: 'node:selected', style: { 'border-width': 3, 'border-color': cssVar('--accent') } },
     { selector: '.faded', style: { opacity: 0.12 } },
+    {
+      selector: 'node.on-path',
+      style: { 'border-width': 4, 'border-color': cssVar('--accent'), 'z-index': 10 },
+    },
+    {
+      selector: 'edge.on-path',
+      style: { width: 4, 'line-color': cssVar('--accent'), 'target-arrow-color': cssVar('--accent'), 'z-index': 10 },
+    },
     { selector: '.hidden', style: { display: 'none' } },
   ];
 }

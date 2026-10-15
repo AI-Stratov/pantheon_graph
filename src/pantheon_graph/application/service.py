@@ -53,6 +53,9 @@ class GraphService:
     async def neighbourhood(self, node_id: str, depth: int = 1) -> Graph:
         return (await self.graph()).neighbourhood(node_id, depth)
 
+    async def path(self, source: str, target: str) -> Graph:
+        return (await self.graph()).shortest_path(source, target)
+
     async def relationships(
         self,
         *,

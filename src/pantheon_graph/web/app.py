@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from pantheon_graph import __version__
 from pantheon_graph.application.aggregator import AllSourcesFailedError
 from pantheon_graph.config import Settings, get_settings
-from pantheon_graph.domain import NodeNotFoundError
+from pantheon_graph.domain import NodeNotFoundError, PathNotFoundError
 from pantheon_graph.ioc import make_container
 from pantheon_graph.logs import setup_logging
 from pantheon_graph.web import api, frontend
@@ -53,6 +53,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
 
     app.add_exception_handler(NodeNotFoundError, _not_found)
+    app.add_exception_handler(PathNotFoundError, _not_found)
     app.add_exception_handler(AllSourcesFailedError, _sources_failed)
 
     app.include_router(api.health_router)

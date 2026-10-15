@@ -1,6 +1,6 @@
 import pytest
 
-from pantheon_graph.domain import Graph, NodeNotFoundError
+from pantheon_graph.domain import Graph, NodeNotFoundError, PathNotFoundError
 from tests.conftest import make_graph
 
 
@@ -76,3 +76,36 @@ def test_nodes_are_hashable_despite_properties() -> None:
     graph = make_graph(['zeus'])
 
     assert len(set(graph.nodes)) == 1
+
+
+def test_shortest_path_walks_edges_in_order() -> None:
+    graph = make_graph(
+        ['hera', 'zeus', 'hermes', 'hephaestus', 'maia'],
+        [
+            ('hera', 'hephaestus', 'parent'),
+            ('zeus', 'hera', 'spouse'),
+            ('zeus', 'hermes', 'parent'),
+            ('maia', 'hermes', 'parent'),
+        ],
+    )
+
+    path = graph.shortest_path('hephaestus', 'hermes')
+
+    assert [node.id for node in path.nodes] == ['hephaestus', 'hera', 'zeus', 'hermes']
+    assert [edge.kind for edge in path.edges] == ['parent', 'spouse', 'parent']
+
+
+def test_shortest_path_to_itself() -> None:
+    path = make_graph(['zeus']).shortest_path('zeus', 'zeus')
+
+    assert [node.id for node in path.nodes] == ['zeus']
+    assert path.edges == ()
+
+
+def test_shortest_path_errors() -> None:
+    graph = make_graph(['zeus', 'odin'])
+
+    with pytest.raises(PathNotFoundError):
+        graph.shortest_path('zeus', 'odin')
+    with pytest.raises(NodeNotFoundError):
+        graph.shortest_path('zeus', 'thor')

@@ -67,6 +67,26 @@ def test_index_injects_api_base(client: TestClient) -> None:
     page = client.get('/')
 
     assert page.status_code == 200
-    assert 'window.PANTHEON_API_BASE = "";' in page.text
-    for asset in ('styles.css', 'favicon.svg', 'js/main.js', 'js/api.js', 'js/theme.js'):
+    assert 'window.PANTHEON_CONFIG = {"apiBase": "", "snapshot": null};' in page.text
+    for asset in (
+        'styles.css',
+        'favicon.svg',
+        'js/main.js',
+        'js/api.js',
+        'js/theme.js',
+        'js/family-tree.js',
+    ):
         assert client.get(f'/static/{asset}').status_code == 200, asset
+
+
+def test_path(client: TestClient) -> None:
+    data = client.get('/api/graph/path', params={'source': 'hephaestus', 'target': 'hermes'}).json()
+
+    assert [node['id'] for node in data['nodes']] == ['hephaestus', 'hera', 'zeus', 'hermes']
+    assert len(data['edges']) == 3
+
+
+def test_path_unknown_node(client: TestClient) -> None:
+    response = client.get('/api/graph/path', params={'source': 'zeus', 'target': 'odin'})
+
+    assert response.status_code == 404

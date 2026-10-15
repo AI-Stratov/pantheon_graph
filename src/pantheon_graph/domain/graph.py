@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+import itertools
+from collections import Counter, defaultdict, deque
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from functools import cached_property
 from typing import Any
 
-from pantheon_graph.domain.errors import NodeNotFoundError
+from pantheon_graph.domain.errors import NodeNotFoundError, PathNotFoundError
 
 type Properties = Mapping[str, Any]
 
@@ -122,6 +123,42 @@ class Graph:
                 break
             visited |= frontier
         return self.induced(visited)
+
+    def shortest_path(self, source: str, target: str) -> Graph:
+        """Fewest-hops chain from ``source`` to ``target``, ignoring edge direction.
+
+        The result lists nodes and edges in walking order, so it reads as
+        "source -edge-> node -edge-> ... target".
+
+        Raises:
+            NodeNotFoundError: If either endpoint is unknown
+            PathNotFoundError: If the endpoints are not connected
+        """
+        self.node(source)
+        self.node(target)
+
+        previous: dict[str, str | None] = {source: None}
+        queue = deque([source])
+        while queue and target not in previous:
+            current = queue.popleft()
+            for neighbour in sorted(self._adjacency.get(current, ())):  # sorted: stable answer
+                if neighbour not in previous:
+                    previous[neighbour] = current
+                    queue.append(neighbour)
+
+        if target not in previous:
+            raise PathNotFoundError(source, target)
+
+        chain = [target]
+        while (step := previous[chain[-1]]) is not None:
+            chain.append(step)
+        chain.reverse()
+
+        edges = tuple(self._edge_between(a, b) for a, b in itertools.pairwise(chain))
+        return Graph(tuple(self.node(node_id) for node_id in chain), edges)
+
+    def _edge_between(self, first: str, second: str) -> Edge:
+        return next(edge for edge in self.edges if {edge.source, edge.target} == {first, second})
 
     def filter_edges(
         self,

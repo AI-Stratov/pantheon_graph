@@ -86,3 +86,13 @@ async def get_neighbourhood(
 ) -> GraphSchema:
     """The node together with everything within ``depth`` hops of it."""
     return GraphSchema.model_validate(await service.neighbourhood(node_id, depth))
+
+
+@graph_router.get('/path', responses={404: {'description': 'Unknown node or no connection'}})
+async def get_path(
+    service: FromDishka[GraphService],
+    source: Annotated[str, Query(description='Start node ID')],
+    target: Annotated[str, Query(description='End node ID')],
+) -> GraphSchema:
+    """The shortest chain of relationships linking two nodes, in walking order."""
+    return GraphSchema.model_validate(await service.path(source, target))
