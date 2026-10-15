@@ -31,7 +31,7 @@ async def _sources_failed(_: Request, exc: Exception) -> JSONResponse:
     return JSONResponse({'detail': str(exc)}, status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, *, dist: Path = frontend.DIST) -> FastAPI:
     settings = settings or get_settings()
     setup_logging(settings.log_level)
 
@@ -42,6 +42,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.settings = settings
+    app.state.dist = dist
     setup_dishka(make_container(settings, FastapiProvider()), app)
 
     if settings.cors_origins:
@@ -59,5 +60,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(api.health_router)
     app.include_router(api.graph_router)
     app.include_router(frontend.router)
-    app.mount('/static', StaticFiles(directory=Path(str(frontend.STATIC))), name='static')
+    # Built assets (JS, CSS, fonts, favicon); registered last so API routes win
+    app.mount('/', StaticFiles(directory=dist, check_dir=False), name='ui')
     return app

@@ -24,3 +24,9 @@ htmlcov/
 
 # Static demo build
 site/
+
+# Built UI (frontend/ -> vite build)
+src/pantheon_graph/web/dist/
+node_modules/
+frontend/test-results/
+frontend/playwright-report/

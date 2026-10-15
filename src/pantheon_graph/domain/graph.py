@@ -8,6 +8,7 @@ from functools import cached_property
 from typing import Any
 
 from pantheon_graph.domain.errors import NodeNotFoundError, PathNotFoundError
+from pantheon_graph.domain.vocabulary import Relation
 
 type Properties = Mapping[str, Any]
 
@@ -31,6 +32,31 @@ class Edge:
 
     def touches(self, node_id: str) -> bool:
         return node_id in (self.source, self.target)
+
+
+_SYMMETRIC = frozenset({Relation.SPOUSE, Relation.SIBLING})
+
+
+def _edge_key(kind: str, source: str, target: str) -> tuple[str, ...]:
+    if kind in _SYMMETRIC:
+        source, target = sorted((source, target))
+    return kind, source, target
+
+
+def _merge_nodes(existing: Node | None, new: Node, node_id: str) -> Node:
+    sources = [*existing.properties.get('sources', ())] if existing else []
+    if (source := new.properties.get('source')) and source not in sources:
+        sources.append(source)
+    properties = {**(existing.properties if existing else {}), **new.properties}
+    properties.pop('source', None)
+    if sources:
+        properties['sources'] = sources
+    return Node(
+        id=node_id,
+        label=new.label,
+        kind=new.kind or (existing.kind if existing else None),
+        properties=properties,
+    )
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -58,12 +84,42 @@ class Graph:
 
     @classmethod
     def merge(cls, graphs: Iterable[Graph]) -> Graph:
-        """Union of graphs; on ID clashes the later graph wins, order is preserved."""
+        """Union of snapshots coming from different sources.
+
+        - A node with an unseen ID whose label matches an already merged node
+          (ignoring case) is the same figure under another source's ID: it is
+          folded into the existing node and its edges are re-pointed.
+        - Folded nodes keep the first ID, take label and kind from the later
+          source and combine properties (later values win); ``sources`` lists
+          every source that reported the node.
+        - Edges are deduplicated by meaning (kind plus endpoints, unordered for
+          symmetric relations), so one marriage reported twice stays one edge.
+        """
         nodes: dict[str, Node] = {}
-        edges: dict[str, Edge] = {}
+        edges: dict[tuple[str, ...], Edge] = {}
         for graph in graphs:
-            nodes.update((node.id, node) for node in graph.nodes)
-            edges.update((edge.id, edge) for edge in graph.edges)
+            by_label = {node.label.casefold(): node.id for node in nodes.values()}
+            alias = {
+                node.id: by_label[node.label.casefold()]
+                for node in graph.nodes
+                if node.id not in nodes and node.label.casefold() in by_label
+            }
+            for node in graph.nodes:
+                node_id = alias.get(node.id, node.id)
+                nodes[node_id] = _merge_nodes(nodes.get(node_id), node, node_id)
+            for edge in graph.edges:
+                source = alias.get(edge.source, edge.source)
+                target = alias.get(edge.target, edge.target)
+                key = _edge_key(edge.kind, source, target)
+                previous = edges.get(key)
+                edges[key] = Edge(
+                    id=previous.id if previous else edge.id,
+                    source=previous.source if previous else source,
+                    target=previous.target if previous else target,
+                    kind=edge.kind,
+                    label=edge.label or (previous.label if previous else None),
+                    properties={**(previous.properties if previous else {}), **edge.properties},
+                )
         return cls(tuple(nodes.values()), tuple(edges.values())).without_dangling_edges()
 
     @cached_property

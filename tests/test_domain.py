@@ -1,6 +1,6 @@
 import pytest
 
-from pantheon_graph.domain import Graph, NodeNotFoundError, PathNotFoundError
+from pantheon_graph.domain import Edge, Graph, Node, NodeNotFoundError, PathNotFoundError
 from tests.conftest import make_graph
 
 
@@ -109,3 +109,70 @@ def test_shortest_path_errors() -> None:
         graph.shortest_path('zeus', 'odin')
     with pytest.raises(NodeNotFoundError):
         graph.shortest_path('zeus', 'thor')
+
+
+def test_merge_folds_same_figure_from_another_source() -> None:
+    bundled = Graph.build(
+        [
+            Node(
+                id='zeus',
+                label='Zeus',
+                kind='olympian',
+                properties={'source': 'memory', 'roman': 'Jupiter'},
+            ),
+            Node(id='hera', label='Hera', kind='olympian', properties={'source': 'memory'}),
+            Node(id='ares', label='Ares', kind='olympian', properties={'source': 'memory'}),
+        ],
+        [
+            Edge(id='hera-zeus-spouse', source='hera', target='zeus', kind='spouse'),
+            Edge(
+                id='zeus-ares-parent', source='zeus', target='ares', kind='parent', label='parent'
+            ),
+        ],
+    )
+    wikidata = Graph.build(
+        [
+            Node(
+                id='Q34201',
+                label='zeus',
+                kind='deity',
+                properties={'source': 'wikidata', 'gender': 'male'},
+            ),
+            Node(id='Q35500', label='Hera', kind='deity', properties={'source': 'wikidata'}),
+            Node(id='Q40901', label='Ares', kind='deity', properties={'source': 'wikidata'}),
+            Node(id='Q1', label='Eris', kind='deity', properties={'source': 'wikidata'}),
+        ],
+        [
+            # same marriage, other direction; same fatherhood with a more specific label
+            Edge(id='Q34201-Q35500-spouse', source='Q34201', target='Q35500', kind='spouse'),
+            Edge(
+                id='Q34201-Q40901-parent',
+                source='Q34201',
+                target='Q40901',
+                kind='parent',
+                label='father',
+            ),
+            Edge(id='Q35500-Q1-parent', source='Q35500', target='Q1', kind='parent'),
+        ],
+    )
+
+    merged = Graph.merge([bundled, wikidata])
+
+    assert [node.id for node in merged.nodes] == ['zeus', 'hera', 'ares', 'Q1']
+    zeus = merged.node('zeus')
+    assert zeus.kind == 'deity'
+    assert zeus.properties == {
+        'roman': 'Jupiter',
+        'gender': 'male',
+        'sources': ['memory', 'wikidata'],
+    }
+    assert len(merged.edges) == 3
+    fatherhood = merged.filter_edges(source='zeus', target='ares').edges[0]
+    assert (fatherhood.id, fatherhood.label) == ('zeus-ares-parent', 'father')
+    assert merged.filter_edges(source='hera', target='Q1').edges
+
+
+def test_merge_keeps_distinct_nodes_within_one_source() -> None:
+    graph = Graph.build([Node(id='a', label='Eros'), Node(id='b', label='Eros')])
+
+    assert len(Graph.merge([graph]).nodes) == 2

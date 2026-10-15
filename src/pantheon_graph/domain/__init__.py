@@ -2,10 +2,11 @@
 
 from pantheon_graph.domain.errors import NodeNotFoundError, PathNotFoundError
 from pantheon_graph.domain.graph import Edge, Graph, GraphStats, Node
-from pantheon_graph.domain.vocabulary import NodeKind, Relation
+from pantheon_graph.domain.vocabulary import Gender, NodeKind, Relation
 
 __all__ = [
     'Edge',
+    'Gender',
     'Graph',
     'GraphStats',
     'Node',

@@ -1,5 +1,6 @@
 import os
 from collections.abc import Iterator, Sequence
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -23,8 +24,21 @@ def settings(monkeypatch: pytest.MonkeyPatch) -> Settings:
 
 
 @pytest.fixture
-def client(settings: Settings) -> Iterator[TestClient]:
-    with TestClient(create_app(settings)) as test_client:
+def dist(tmp_path: Path) -> Path:
+    """A stand-in for the Vite build, so Python tests do not need Node."""
+    root = tmp_path / 'dist'
+    (root / 'assets').mkdir(parents=True)
+    (root / 'index.html').write_text(
+        '<script>window.PANTHEON_CONFIG = /*%CONFIG%*/{};</script>'
+        '<script type="module" src="./assets/app.js"></script>'
+    )
+    (root / 'assets' / 'app.js').write_text('console.log("ui")')
+    return root
+
+
+@pytest.fixture
+def client(settings: Settings, dist: Path) -> Iterator[TestClient]:
+    with TestClient(create_app(settings, dist=dist)) as test_client:
         yield test_client
 
 

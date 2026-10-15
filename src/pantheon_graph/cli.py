@@ -79,7 +79,10 @@ def _export(out_dir: Path) -> None:
     settings = get_settings()
     setup_logging(settings.log_level)
     graph = asyncio.run(_snapshot(settings))
-    write_static_site(graph, out_dir)
+    try:
+        write_static_site(graph, out_dir)
+    except FileNotFoundError as exc:
+        sys.exit(str(exc))
     print(f'Static site with {len(graph.nodes)} nodes written to {out_dir}/')
 
 
