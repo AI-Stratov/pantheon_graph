@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Pantheon Graph</title>
+    <meta name="description" content="Interactive map of the Greek pantheon: who is whose parent, spouse and sibling, and how any two deities are related." />
+    <meta property="og:title" content="Pantheon Graph" />
+    <meta property="og:description" content="Explore the family tree of the Greek gods and find how any two deities are related." />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="static/styles.css" />
+    <script>
+      window.PANTHEON_CONFIG = /*%CONFIG%*/{};
+    </script>
+    <script type="module" src="static/js/main.js"></script>
+  </head>
+  <body>
+    <header class="toolbar">
+      <h1 class="brand">Pantheon Graph</h1>
+
+      <form id="search-form" class="search" role="search">
+        <input id="search" type="search" placeholder="Search a deity…  ( / )" autocomplete="off"
+               aria-label="Search a deity" list="deity-options" />
+      </form>
+      <datalist id="deity-options"></datalist>
+
+      <label class="field">
+        <span>Layout</span>
+        <select id="layout">
+          <option value="cose">Force-directed</option>
+          <option value="tree">Family tree</option>
+          <option value="concentric">Concentric</option>
+          <option value="circle">Circle</option>
+        </select>
+      </label>
+
+      <div class="actions">
+        <button type="button" data-action="fit" title="Fit the whole graph">Fit</button>
+        <button type="button" data-action="reset" title="Clear selection (Esc)">Reset</button>
+        <button type="button" data-action="refresh" title="Reload every data source">Refresh</button>
+        <button type="button" data-action="export" title="Download as PNG">PNG</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <section class="intro">
+          <p>Family ties of the Greek gods. Click a deity to see its relatives, or ask how two of them are related:</p>
+          <ul id="examples" class="examples"></ul>
+        </section>
+        <section>
+          <h2>Relationships</h2>
+          <div id="edge-filters" class="filters"></div>
+        </section>
+        <section>
+          <h2>Legend</h2>
+          <ul id="legend" class="legend"></ul>
+        </section>
+        <p id="summary" class="muted"></p>
+        <p class="muted small">
+          <kbd>/</kbd> search · <kbd>Esc</kbd> reset · double-click to zoom
+        </p>
+      </aside>
+
+      <div class="canvas">
+        <div id="cy" aria-label="Graph of Greek deities"></div>
+        <output id="status" class="status">Loading graph…</output>
+      </div>
+
+      <aside id="details" class="details" hidden>
+        <button type="button" class="close" data-action="close" aria-label="Close details">×</button>
+
+        <div id="node-view">
+          <h2 id="details-title" class="title"></h2>
+          <span id="details-kind" class="badge"></span>
+          <dl id="details-props"></dl>
+          <form id="path-form" class="path-form">
+            <label for="path-target">How is it related to…</label>
+            <div class="row">
+              <input id="path-target" type="search" list="deity-options" autocomplete="off"
+                     placeholder="another deity" required />
+              <button type="submit">Find</button>
+            </div>
+          </form>
+          <div id="details-relations"></div>
+        </div>
+
+        <div id="path-view" hidden>
+          <h2 class="title">Connection</h2>
+          <p id="path-summary" class="muted"></p>
+          <ol id="path-steps" class="steps"></ol>
+        </div>
+      </aside>
+    </main>
+  </body>
+</html>

@@ -1,29 +1,48 @@
 [project]
 name = "pantheon-graph"
-version = "0.1.0"
+version = "1.0.0"
+description = "Greek pantheon knowledge graph merged from Wikidata, Neo4j, ArangoDB and a bundled dataset"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Andrey Istratov", email = "workistratov@gmail.com" }]
 requires-python = ">=3.13"
+classifiers = [
+    "Framework :: FastAPI",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
 dependencies = [
-    "fastapi>=0.116.1",
-    "uvicorn[standard]>=0.35.0",
-    "pydantic>=2.10.1",
-    "pydantic-settings>=2.10.0",
-    "dishka>=1.6.0",
-    "taskiq>=0.11.18",
-    "taskiq-redis>=1.1.0",
-    "neo4j>=5.28.2",
-    "python-arango>=8.2.2",
-    "httpx>=0.28.1",
-    "redis>=6.4.0",
-    "orjson>=3.11.2",
+    "dishka>=1.10.1",
+    "fastapi>=0.143.2",
+    "httpx2>=2.13.1",
+    "neo4j>=6.4.1",
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.16.0",
+    "python-arango-async>=1.2.6",
+    "redis>=8.1.0",
+    "taskiq>=0.13.0",
+    "taskiq-redis>=1.2.4",
+    "uvicorn[standard]>=0.54.0",
 ]
 
-[project.optional-dependencies]
+[project.scripts]
+pantheon-graph = "pantheon_graph.cli:main"
+
+[project.urls]
+Repository = "https://github.com/AI-Stratov/pantheon_graph"
+
+[dependency-groups]
 dev = [
-    "ruff>=0.12.10",
-    "mypy>=1.17.1",
-    "pytest>=8.4.1",
-    "pre-commit>=4.3.0",
+    "mypy>=2.4.0",
+    "pre-commit>=4.7.0",
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
 ]
+
+[build-system]
+requires = ["uv_build>=0.11.0,<0.14"]
+build-backend = "uv_build"
 
 [tool.ruff]
 line-length = 100
@@ -31,22 +50,47 @@ target-version = "py313"
 
 [tool.ruff.lint]
 select = [
-    "E", "W", "F", "I", "UP", "ASYNC", "B", "C4", "PIE", "Q", "RUF",
+    "A",     # builtins shadowing
+    "ASYNC", # async pitfalls
+    "B",     # bugbear
+    "C4",    # comprehensions
+    "E",
+    "F",
+    "FURB",  # refurb
+    "I",     # isort
+    "N",     # naming
+    "PERF",  # performance
+    "PIE",
+    "PT",    # pytest style
+    "PTH",   # pathlib
+    "RET",   # returns
+    "RUF",
+    "SIM",   # simplify
+    "UP",    # pyupgrade
+    "W",
 ]
-ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PLR2004"]
 
 [tool.ruff.format]
 quote-style = "single"
-indent-style = "space"
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
 
 [tool.mypy]
 python_version = "3.13"
+files = ["src", "tests"]
 strict = true
-warn_unused_configs = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_return_any = true
 warn_unreachable = true
-no_implicit_optional = true
 pretty = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["arangoasync.*", "taskiq_redis.*"]
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers"]

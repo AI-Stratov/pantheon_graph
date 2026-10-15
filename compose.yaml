@@ -1,0 +1,71 @@
+name: pantheon-graph
+
+x-app: &app
+  build: .
+  image: pantheon-graph:latest
+  restart: unless-stopped
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    PANTHEON_REDIS_URL: redis://redis:6379/0
+    PANTHEON_NEO4J__URI: neo4j://neo4j:7687
+    PANTHEON_NEO4J__PASSWORD: ${NEO4J_PASSWORD:-pantheon-secret}
+    PANTHEON_ARANGO__URL: http://arangodb:8529
+    PANTHEON_ARANGO__PASSWORD: ${ARANGO_PASSWORD:-pantheon-secret}
+  depends_on:
+    redis:
+      condition: service_healthy
+
+services:
+  web:
+    <<: *app
+    ports:
+      - "${PANTHEON_PORT:-8080}:8080"
+
+  worker:
+    <<: *app
+    command: ["taskiq", "worker", "pantheon_graph.worker:broker"]
+    healthcheck:
+      disable: true
+
+  scheduler:
+    <<: *app
+    command: ["taskiq", "scheduler", "pantheon_graph.worker:scheduler"]
+    healthcheck:
+      disable: true
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Optional graph databases: docker compose --profile databases up -d
+  neo4j:
+    image: neo4j:5-community
+    profiles: [databases]
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-pantheon-secret}
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j-data:/data
+
+  arangodb:
+    image: arangodb:3.12
+    profiles: [databases]
+    environment:
+      ARANGO_ROOT_PASSWORD: ${ARANGO_PASSWORD:-pantheon-secret}
+    ports:
+      - "8529:8529"
+    volumes:
+      - arango-data:/var/lib/arangodb3
+
+volumes:
+  neo4j-data:
+  arango-data:
