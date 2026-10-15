@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Pantheon Graph</title>
+    <link rel="icon" href="static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="static/styles.css" />
+    <script>
+      window.PANTHEON_API_BASE = "%API_BASE%";
+    </script>
+    <script type="module" src="static/js/main.js"></script>
+  </head>
+  <body>
+    <header class="toolbar">
+      <h1 class="brand">Pantheon Graph</h1>
+
+      <form id="search-form" class="search" role="search">
+        <input id="search" type="search" placeholder="Search a deity…  ( / )" autocomplete="off"
+               aria-label="Search a deity" list="search-options" />
+        <datalist id="search-options"></datalist>
+      </form>
+
+      <label class="field">
+        <span>Layout</span>
+        <select id="layout">
+          <option value="cose">Force-directed</option>
+          <option value="breadthfirst">Family tree</option>
+          <option value="concentric">Concentric</option>
+          <option value="circle">Circle</option>
+        </select>
+      </label>
+
+      <div class="actions">
+        <button type="button" data-action="fit" title="Fit the whole graph">Fit</button>
+        <button type="button" data-action="reset" title="Clear selection">Reset</button>
+        <button type="button" data-action="refresh" title="Reload every data source">Refresh</button>
+        <button type="button" data-action="export" title="Download as PNG">PNG</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <section>
+          <h2>Relationships</h2>
+          <div id="edge-filters" class="filters"></div>
+        </section>
+        <section>
+          <h2>Legend</h2>
+          <ul id="legend" class="legend"></ul>
+        </section>
+        <p id="summary" class="muted"></p>
+      </aside>
+
+      <div class="canvas">
+        <div id="cy" aria-label="Graph of Greek deities"></div>
+        <output id="status" class="status">Loading graph…</output>
+      </div>
+
+      <aside id="details" class="details" hidden>
+        <button type="button" class="close" data-action="close" aria-label="Close details">×</button>
+        <h2 id="details-title"></h2>
+        <span id="details-kind" class="badge"></span>
+        <dl id="details-props"></dl>
+        <div id="details-relations"></div>
+      </aside>
+    </main>
+  </body>
+</html>

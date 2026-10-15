@@ -1,46 +1,137 @@
 # Pantheon Graph
 
-Visualize the Greek pantheon by merging multiple graph adapters into one Cytoscape view.
+[![CI](https://github.com/AI-Stratov/pantheon_graph/actions/workflows/ci.yml/badge.svg)](https://github.com/AI-Stratov/pantheon_graph/actions/workflows/ci.yml)
+![Python 3.13](https://img.shields.io/badge/python-3.13-blue)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
-Live demo:
-- URL: https://your-demo-url.example (replace with real link)
-- Screenshot: docs/screenshot.png (add an image file)
+An interactive map of the Greek pantheon. Family ties are collected from several
+graph sources — **Wikidata**, **Neo4j**, **ArangoDB** and a bundled dataset —
+merged into one graph and explored in the browser with Cytoscape.
 
-Highlights:
-- Clean DDD: domain / application / infrastructure / presentation
-- Multi-adapter: Wikidata (SPARQL), Neo4j, ArangoDB, in-memory
-- Caching: Redis or in-memory
-- DI: dishka; Background tasks: taskiq
-- One-page UI with Cytoscape
+- Search, neighbourhood highlighting, relation filters, four layouts, PNG export, light and dark themes
+- Every source is optional; a slow or broken one is skipped while the rest keep serving
+- Read-through cache in memory or Redis, refreshed on a schedule by a background worker
+- One command loads the bundled pantheon into Neo4j or ArangoDB for a full local demo
 
-Quick start (view):
-- Open the live demo above. That’s it.
+## Quick start
 
-Quick start (self-host minimal):
-- Requirements: Python 3.13+, Redis (optional)
-- Setup: uv sync; pre-commit install (optional)
-- Run (pick one):
-  - uv run src/cli.py
-  - uv run -m cli  (ensure PYTHONPATH includes ./src or mark src as Sources Root in your IDE)
-  - uv run uvicorn presentation.app:app --host 127.0.0.1 --port 8080  (ensure PYTHONPATH includes ./src)
-- Open http://127.0.0.1:8080/
+With [uv](https://docs.astral.sh/uv/) and Python 3.13:
 
-PyCharm run tips:
-- Option A (Python configuration): select interpreter at .venv, Script path = src/cli.py, Working directory = project root.
-- Option B (Module name): Module name = cli, enable “Add content roots to PYTHONPATH” or mark src as Sources Root.
-- Option C (External Tool): Program = uv, Arguments = run $ProjectFileDir$/src/cli.py, Working directory = $ProjectFileDir$.
+```bash
+uv sync
+uv run pantheon-graph            # http://127.0.0.1:8080
+```
 
-API:
-- GET /health
-- GET /api/graph?refresh=false
-- GET /api/relationships?source=&target=&type=&label=
-- POST /api/graph/refresh
+The bundled dataset needs no external services. Copy `.env.example` to `.env`
+to switch other sources on.
 
-Adapters:
-- Wikidata: SPARQL endpoint. Be a good citizen: set a proper User-Agent.
-- Neo4j and ArangoDB: read-only snapshots, simple generic queries.
+### Everything in Docker
 
+```bash
+docker compose up -d --build                    # web + worker + scheduler + Redis
+docker compose --profile databases up -d        # also start Neo4j and ArangoDB
+docker compose run --rm web pantheon-graph seed neo4j
+docker compose run --rm web pantheon-graph seed arango
+```
 
-Background worker (optional):
-- Requires Redis broker: PANTHEON_REDIS_DSN
-- Run: uv run taskiq worker infrastructure.tasks.worker:broker -q
+Then enable the databases in `.env` and restart the app:
+
+```dotenv
+PANTHEON_NEO4J__ENABLED=true
+PANTHEON_ARANGO__ENABLED=true
+```
+
+Compose already points the containers at the bundled services, with
+`pantheon-secret` as the default password (override with `NEO4J_PASSWORD` /
+`ARANGO_PASSWORD`).
+
+## Architecture
+
+```mermaid
+flowchart LR
+    UI[Browser UI] --> API[FastAPI]
+    API --> S[GraphService]
+    W[taskiq worker] --> S
+    S --> C[(Cache: memory / Redis)]
+    S --> A[GraphAggregator]
+    A --> M[Bundled dataset]
+    A --> WD[Wikidata SPARQL]
+    A --> N[(Neo4j)]
+    A --> AR[(ArangoDB)]
+```
+
+The code follows a ports-and-adapters layout; dependencies only point inwards.
+
+```
+src/pantheon_graph/
+├── domain/          immutable Graph / Node / Edge and graph algorithms, no framework imports
+├── application/     ports (Protocols), GraphAggregator and GraphService use cases
+├── infrastructure/  sources (memory, Wikidata, Neo4j, ArangoDB), caches, database seeding
+├── web/             FastAPI routes, response schemas, static single-page UI
+├── ioc.py           dishka container shared by the web app and the worker
+├── worker.py        taskiq broker, scheduler and the refresh task
+├── config.py        typed settings from PANTHEON_* environment variables
+└── cli.py           `pantheon-graph serve | seed`
+```
+
+Sources agree on a small vocabulary: node `kind` (god, goddess, titan, …) and
+edge `kind` (`parent`, `spouse`, `sibling`). Parent edges always point from parent
+to child, symmetric relations are stored once per pair, and nodes keep stable
+IDs, so the same deity coming from different sources collapses into one node.
+
+## API
+
+Interactive docs are served at `/docs`.
+
+| Method | Path                               | Description                                          |
+|--------|------------------------------------|------------------------------------------------------|
+| GET    | `/health`                          | Cache and source status; 503 when nothing can serve  |
+| GET    | `/api/graph`                       | The whole merged graph                               |
+| POST   | `/api/graph/refresh`               | Reload every source and update the cache             |
+| GET    | `/api/graph/stats`                 | Node and edge counts by kind                         |
+| GET    | `/api/graph/search?q=`             | Search nodes by label                                |
+| GET    | `/api/graph/relationships`         | Filter edges by `node`, `source`, `target`, `kind`, `label` |
+| GET    | `/api/graph/nodes/{id}?depth=1..3` | A node with everything within `depth` hops           |
+
+## Configuration
+
+All settings are environment variables with the `PANTHEON_` prefix (a `.env` file
+works too); nested sections use a double underscore. See
+[`.env.example`](.env.example) for the full list.
+
+| Variable                                   | Default                 | Purpose                              |
+|--------------------------------------------|-------------------------|--------------------------------------|
+| `PANTHEON_HOST` / `PANTHEON_PORT`          | `127.0.0.1` / `8080`    | Bind address                         |
+| `PANTHEON_MEMORY__ENABLED`                 | `true`                  | Bundled dataset                      |
+| `PANTHEON_WIKIDATA__ENABLED`               | `false`                 | Wikidata SPARQL source               |
+| `PANTHEON_NEO4J__ENABLED`, `__URI`, `__PASSWORD` | `false`           | Neo4j source                         |
+| `PANTHEON_ARANGO__ENABLED`, `__URL`, `__GRAPH`   | `false`           | ArangoDB source                      |
+| `PANTHEON_REDIS_URL`                       | —                       | Shared cache and task broker         |
+| `PANTHEON_CACHE_TTL`                       | `3600`                  | Snapshot lifetime, `0` keeps it forever |
+| `PANTHEON_REFRESH_CRON`                    | `*/30 * * * *`          | Background refresh schedule          |
+| `PANTHEON_SOURCE_TIMEOUT`                  | `30`                    | Time budget per source, seconds      |
+| `PANTHEON_PUBLIC_API_BASE`, `PANTHEON_CORS_ORIGINS` | —              | Serving the UI from another origin   |
+
+## Background refresh
+
+With Redis configured, the worker rebuilds the cached graph on the
+`PANTHEON_REFRESH_CRON` schedule so web requests never wait for slow sources:
+
+```bash
+uv run taskiq worker pantheon_graph.worker:broker
+uv run taskiq scheduler pantheon_graph.worker:scheduler
+```
+
+## Development
+
+```bash
+uv sync                      # installs dev tools too
+uv run pre-commit install
+uv run pytest
+uv run ruff check && uv run ruff format --check
+uv run mypy
+```
+
+## License
+
+[MIT](LICENSE)

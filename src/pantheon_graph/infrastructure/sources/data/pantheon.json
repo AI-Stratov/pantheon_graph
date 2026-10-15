@@ -1,0 +1,59 @@
+{
+  "nodes": [
+    {"id": "gaia", "label": "Gaia", "kind": "primordial", "domain": "earth", "roman": "Terra"},
+    {"id": "uranus", "label": "Uranus", "kind": "primordial", "domain": "sky", "roman": "Caelus"},
+    {"id": "cronus", "label": "Cronus", "kind": "titan", "domain": "time, harvest", "roman": "Saturn"},
+    {"id": "rhea", "label": "Rhea", "kind": "titan", "domain": "motherhood, fertility", "roman": "Ops"},
+    {"id": "coeus", "label": "Coeus", "kind": "titan", "domain": "intellect"},
+    {"id": "phoebe", "label": "Phoebe", "kind": "titan", "domain": "prophecy"},
+    {"id": "leto", "label": "Leto", "kind": "titan", "domain": "motherhood, modesty", "roman": "Latona"},
+    {"id": "metis", "label": "Metis", "kind": "titan", "domain": "wisdom, cunning"},
+    {"id": "maia", "label": "Maia", "kind": "goddess", "domain": "nursing, mountains", "roman": "Maia"},
+    {"id": "zeus", "label": "Zeus", "kind": "god", "domain": "sky, thunder, justice", "roman": "Jupiter"},
+    {"id": "hera", "label": "Hera", "kind": "goddess", "domain": "marriage, family", "roman": "Juno"},
+    {"id": "poseidon", "label": "Poseidon", "kind": "god", "domain": "sea, earthquakes, horses", "roman": "Neptune"},
+    {"id": "hades", "label": "Hades", "kind": "god", "domain": "underworld, the dead", "roman": "Pluto"},
+    {"id": "demeter", "label": "Demeter", "kind": "goddess", "domain": "harvest, agriculture", "roman": "Ceres"},
+    {"id": "hestia", "label": "Hestia", "kind": "goddess", "domain": "hearth, home", "roman": "Vesta"},
+    {"id": "athena", "label": "Athena", "kind": "goddess", "domain": "wisdom, warfare, crafts", "roman": "Minerva"},
+    {"id": "apollo", "label": "Apollo", "kind": "god", "domain": "music, prophecy, healing", "roman": "Apollo"},
+    {"id": "artemis", "label": "Artemis", "kind": "goddess", "domain": "hunt, wilderness, moon", "roman": "Diana"},
+    {"id": "ares", "label": "Ares", "kind": "god", "domain": "war", "roman": "Mars"},
+    {"id": "aphrodite", "label": "Aphrodite", "kind": "goddess", "domain": "love, beauty", "roman": "Venus"},
+    {"id": "hephaestus", "label": "Hephaestus", "kind": "god", "domain": "fire, forge, metalwork", "roman": "Vulcan"},
+    {"id": "hermes", "label": "Hermes", "kind": "god", "domain": "messengers, trade, travellers", "roman": "Mercury"},
+    {"id": "dionysus", "label": "Dionysus", "kind": "god", "domain": "wine, festivity, theatre", "roman": "Bacchus"},
+    {"id": "persephone", "label": "Persephone", "kind": "goddess", "domain": "spring, underworld", "roman": "Proserpina"},
+    {"id": "amphitrite", "label": "Amphitrite", "kind": "goddess", "domain": "sea", "roman": "Salacia"},
+    {"id": "semele", "label": "Semele", "kind": "mortal", "domain": "princess of Thebes"},
+    {"id": "alcmene", "label": "Alcmene", "kind": "mortal", "domain": "queen of Tiryns"},
+    {"id": "heracles", "label": "Heracles", "kind": "hero", "domain": "strength, heroes", "roman": "Hercules"}
+  ],
+  "parents": [
+    {"parents": ["gaia", "uranus"], "children": ["cronus", "rhea", "coeus", "phoebe"]},
+    {"parents": ["uranus"], "children": ["aphrodite"]},
+    {"parents": ["coeus", "phoebe"], "children": ["leto"]},
+    {"parents": ["cronus", "rhea"], "children": ["zeus", "hera", "poseidon", "hades", "demeter", "hestia"]},
+    {"parents": ["zeus", "metis"], "children": ["athena"]},
+    {"parents": ["zeus", "leto"], "children": ["apollo", "artemis"]},
+    {"parents": ["zeus", "hera"], "children": ["ares"]},
+    {"parents": ["hera"], "children": ["hephaestus"]},
+    {"parents": ["zeus", "maia"], "children": ["hermes"]},
+    {"parents": ["zeus", "semele"], "children": ["dionysus"]},
+    {"parents": ["zeus", "demeter"], "children": ["persephone"]},
+    {"parents": ["zeus", "alcmene"], "children": ["heracles"]}
+  ],
+  "spouses": [
+    ["uranus", "gaia"],
+    ["cronus", "rhea"],
+    ["coeus", "phoebe"],
+    ["zeus", "metis"],
+    ["zeus", "hera"],
+    ["poseidon", "amphitrite"],
+    ["hades", "persephone"],
+    ["hephaestus", "aphrodite"]
+  ],
+  "siblings": [
+    ["apollo", "artemis"]
+  ]
+}
