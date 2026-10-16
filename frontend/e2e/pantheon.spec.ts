@@ -113,3 +113,34 @@ test('one selection moves the camera once', async ({ page }) => {
   await page.waitForTimeout(800);
   expect(await camera.moves()).toBe(3);
 });
+
+test('the constellation keeps medallions and names apart', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForFunction(() => document.querySelector('.canvas canvas'));
+  await page.waitForTimeout(400);
+  const collisions = await page.evaluate(() => {
+    type Box = { x1: number; x2: number; y1: number; y2: number };
+    type Node = { id: () => string; boundingBox: (options: object) => Box };
+    const holder = document.querySelector('.canvas') as unknown as { _cyreg: { cy: { nodes: () => Node[] } } };
+    const boxes = [...holder._cyreg.cy.nodes()].map((node) => ({ id: node.id(), box: node.boundingBox({ includeLabels: true }) }));
+    const hits: string[] = [];
+    boxes.forEach((a, i) =>
+      boxes.slice(i + 1).forEach((b) => {
+        if (a.box.x1 < b.box.x2 && b.box.x1 < a.box.x2 && a.box.y1 < b.box.y2 && b.box.y1 < a.box.y2) hits.push(`${a.id}/${b.id}`);
+      }),
+    );
+    return hits;
+  });
+  expect(collisions).toEqual([]);
+});
+
+test('relatives are tagged with their role', async ({ page }) => {
+  await page.goto('/?node=cronus');
+  const roles = page.locator('.roles span');
+  await expect(roles).toHaveCount(9); // 2 parents, 1 consort, 6 children
+  await expect(roles.filter({ hasText: 'wife' })).toHaveCount(1);
+  await expect(roles.filter({ hasText: 'daughter' })).toHaveCount(3);
+
+  await page.keyboard.press('Escape');
+  await expect(roles).toHaveCount(0);
+});
