@@ -4,12 +4,12 @@ from typing import Any
 import httpx2 as httpx
 
 from pantheon_graph.config import WikidataSettings
-from pantheon_graph.domain import Edge, Graph, Node, NodeKind, Relation
+from pantheon_graph.domain import Edge, Gender, Graph, Node, NodeKind, Relation
 from pantheon_graph.infrastructure.sources._common import relation_edge
 
 GREEK_DEITY = 'Q22989102'
 ZEUS = 'Q34201'
-GENDER_KIND = {'Q6581097': NodeKind.GOD, 'Q6581072': NodeKind.GODDESS}
+GENDERS = {'Q6581097': Gender.MALE, 'Q6581072': Gender.FEMALE}
 
 # Wikidata property -> (relation, label, whether the statement points child -> parent)
 PROPERTIES: dict[str, tuple[Relation, str, bool]] = {
@@ -59,15 +59,12 @@ class WikidataSource:
             # Items without a label in the requested languages come back labelled by their QID
             if not qid or not label or label == qid or qid in nodes:
                 continue
-            properties = {'source': self.name, 'url': f'https://www.wikidata.org/wiki/{qid}'}
+            properties = {'source': self.name, 'wikidata': f'https://www.wikidata.org/wiki/{qid}'}
             if description := row.get('itemDescription'):
                 properties['description'] = description
-            nodes[qid] = Node(
-                id=qid,
-                label=label,
-                kind=GENDER_KIND.get(_match(_QID, row.get('gender')) or '', NodeKind.DEITY),
-                properties=properties,
-            )
+            if gender := GENDERS.get(_match(_QID, row.get('gender')) or ''):
+                properties['gender'] = gender
+            nodes[qid] = Node(id=qid, label=label, kind=NodeKind.DEITY, properties=properties)
         return nodes
 
     async def _fetch_edges(self, qids: list[str]) -> list[Edge]:

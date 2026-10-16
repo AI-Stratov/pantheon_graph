@@ -1,0 +1,145 @@
+@import '@fontsource/cinzel/500.css';
+@import '@fontsource-variable/cormorant-garamond/wght.css';
+@import '@fontsource-variable/cormorant-garamond/wght-italic.css';
+@import '@fontsource-variable/eb-garamond/wght.css';
+@import '@fontsource-variable/inter/wght.css';
+
+/*
+ * Daylight on the Acropolis: limestone and marble, Aegean sky, olive and
+ * terracotta. Flat surfaces, hairline borders, no glow.
+ */
+:root {
+  color-scheme: light;
+
+  --bg: #f2ede4;
+  --surface: #fbf9f4;
+  --surface-sunk: #ece5d8;
+  --line: #e0d7c7;
+  --line-strong: #c8bba5;
+
+  --ink: #29241e;
+  --ink-soft: #564e43;
+  --ink-muted: #887f71;
+
+  --sky: #2f5d8a;
+  --sky-soft: #e4ebf2;
+  --terracotta: #b0623b;
+
+  --shadow: 0 1px 2px rgb(41 36 30 / 0.06), 0 6px 20px rgb(41 36 30 / 0.07);
+  --radius: 14px;
+  --radius-sm: 10px;
+
+  --font-display: 'Cinzel', Georgia, serif;
+  /* EB Garamond covers polytonic Greek, which Cormorant lacks */
+  --font-serif: 'Cormorant Garamond Variable', 'EB Garamond Variable', Georgia, serif;
+  --font-ui: 'Inter Variable', system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--sky);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--sky);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.surface {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--ink-muted);
+  font: 600 11px/1.2 var(--font-ui);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 12px 3px 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.chip:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-sunk);
+}
+
+.button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 999px;
+  background: var(--sky);
+  color: #fff;
+  font: 600 14px/1 var(--font-ui);
+}
+
+.button:hover {
+  background: #244c73;
+}
+
+.button:disabled {
+  background: var(--line-strong);
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}

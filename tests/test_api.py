@@ -1,4 +1,9 @@
+from pathlib import Path
+
 from fastapi.testclient import TestClient
+
+from pantheon_graph.config import Settings
+from pantheon_graph.web.app import create_app
 
 
 def test_health(client: TestClient) -> None:
@@ -39,14 +44,16 @@ def test_stats(client: TestClient) -> None:
 def test_search(client: TestClient) -> None:
     labels = [node['label'] for node in client.get('/api/graph/search?q=he').json()]
 
-    assert labels[:3] == ['Hera', 'Hestia', 'Hephaestus']  # prefix matches in dataset order
+    # prefix matches first, in dataset order, then substring matches
+    assert labels[:4] == ['Helios', 'Hera', 'Hestia', 'Hephaestus']
+    assert 'Rhea' in labels
     assert client.get('/api/graph/search?q=').status_code == 422
 
 
 def test_relationships(client: TestClient) -> None:
     data = client.get('/api/graph/relationships', params={'node': 'zeus', 'kind': 'spouse'}).json()
 
-    assert {node['id'] for node in data['nodes']} == {'zeus', 'hera', 'metis'}
+    assert {node['id'] for node in data['nodes']} == {'zeus', 'hera', 'metis', 'themis'}
 
 
 def test_neighbourhood(client: TestClient) -> None:
@@ -63,20 +70,21 @@ def test_unknown_node_is_404(client: TestClient) -> None:
     assert response.json() == {'detail': "Node 'odin' not found"}
 
 
-def test_index_injects_api_base(client: TestClient) -> None:
+def test_index_injects_config(client: TestClient) -> None:
     page = client.get('/')
 
     assert page.status_code == 200
     assert 'window.PANTHEON_CONFIG = {"apiBase": "", "snapshot": null};' in page.text
-    for asset in (
-        'styles.css',
-        'favicon.svg',
-        'js/main.js',
-        'js/api.js',
-        'js/theme.js',
-        'js/family-tree.js',
-    ):
-        assert client.get(f'/static/{asset}').status_code == 200, asset
+    assert client.get('/assets/app.js').text == 'console.log("ui")'
+
+
+def test_index_without_build(settings: Settings, tmp_path: Path) -> None:
+    with TestClient(create_app(settings, dist=tmp_path / 'missing')) as client:
+        response = client.get('/')
+
+    assert response.status_code == 503
+    assert 'npm' in response.text
+    assert client.get('/health').status_code == 200
 
 
 def test_path(client: TestClient) -> None:

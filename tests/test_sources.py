@@ -6,7 +6,7 @@ import httpx2 as httpx
 import pytest
 
 from pantheon_graph.config import ArangoSettings, Neo4jSettings, WikidataSettings
-from pantheon_graph.domain import Relation
+from pantheon_graph.domain import Gender, NodeKind, Relation
 from pantheon_graph.infrastructure.sources.arango import ArangoSource
 from pantheon_graph.infrastructure.sources.memory import MemorySource
 from pantheon_graph.infrastructure.sources.neo4j import Neo4jSource
@@ -23,6 +23,11 @@ async def test_bundled_dataset_is_consistent() -> None:
     assert {edge.kind for edge in graph.edges} <= set(Relation)
     parents = {edge.source for edge in graph.edges if edge.target == 'athena'}
     assert parents == {'zeus', 'metis'}
+    for node in graph.nodes:
+        assert node.kind in set(NodeKind), node.id
+        assert node.properties['gender'] in set(Gender), node.id
+        assert node.properties['greek'], node.id
+        assert node.properties['wikipedia'].startswith('https://en.wikipedia.org/wiki/'), node.id
 
 
 # --- Wikidata -------------------------------------------------------------------------
@@ -87,8 +92,10 @@ def sparql_handler(request: httpx.Request) -> httpx.Response:
 async def test_wikidata_normalizes_nodes_and_edges() -> None:
     graph = await wikidata(sparql_handler).fetch()
 
-    kinds = {node.id: node.kind for node in graph.nodes}
-    assert kinds == {'Q34201': 'god', 'Q35500': 'goddess', 'Q40901': 'deity'}
+    assert {node.id for node in graph.nodes} == {'Q34201', 'Q35500', 'Q40901'}
+    assert {node.kind for node in graph.nodes} == {'deity'}
+    genders = {node.id: node.properties.get('gender') for node in graph.nodes}
+    assert genders == {'Q34201': 'male', 'Q35500': 'female', 'Q40901': None}
     assert graph.node('Q34201').properties['description'] == 'king of the gods'
     # the symmetric spouse statement collapses to one edge, "child P22 father" is flipped
     assert {(e.source, e.target, e.kind, e.label) for e in graph.edges} == {

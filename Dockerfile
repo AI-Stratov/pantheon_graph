@@ -1,5 +1,16 @@
 # syntax=docker/dockerfile:1
 
+# --- UI: Vite builds straight into the Python package (src/pantheon_graph/web/dist)
+FROM node:22-slim AS ui
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
+COPY frontend ./
+COPY src/pantheon_graph/infrastructure/sources/data /app/src/pantheon_graph/infrastructure/sources/data
+RUN npm run build
+
+
+# --- Python environment
 FROM python:3.13-slim-bookworm AS builder
 COPY --from=ghcr.io/astral-sh/uv:0.11 /uv /uvx /bin/
 ENV UV_COMPILE_BYTECODE=1 \
@@ -15,6 +26,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 COPY pyproject.toml uv.lock README.md LICENSE ./
 COPY src ./src
+COPY --from=ui /app/src/pantheon_graph/web/dist ./src/pantheon_graph/web/dist
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --no-editable
 

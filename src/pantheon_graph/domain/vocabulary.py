@@ -2,13 +2,19 @@ from enum import StrEnum
 
 
 class NodeKind(StrEnum):
+    """What a figure is; gender is a separate ``gender`` property."""
+
     PRIMORDIAL = 'primordial'
     TITAN = 'titan'
-    GOD = 'god'
-    GODDESS = 'goddess'
+    OLYMPIAN = 'olympian'
     DEITY = 'deity'
-    MORTAL = 'mortal'
     HERO = 'hero'
+    MORTAL = 'mortal'
+
+
+class Gender(StrEnum):
+    MALE = 'male'
+    FEMALE = 'female'
 
 
 class Relation(StrEnum):
