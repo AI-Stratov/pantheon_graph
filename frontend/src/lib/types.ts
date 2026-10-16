@@ -38,7 +38,9 @@ export function list(node: NodeData, key: string): string[] {
 
 export function genderOf(node: NodeData): Gender | null {
   const value = node.properties.gender;
-  return value === 'male' || value === 'female' ? value : null;
+  if (value === 'male' || value === 'female') return value;
+  // Older data encoded gender in the kind
+  return node.kind === 'god' ? 'male' : node.kind === 'goddess' ? 'female' : null;
 }
 
 /** Screen area covered by floating UI, in CSS pixels. */

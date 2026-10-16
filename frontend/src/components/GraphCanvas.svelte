@@ -108,6 +108,13 @@
       selector: 'edge.tree[kind != "parent"]',
       style: { 'curve-style': 'unbundled-bezier', 'control-point-distances': [-34], 'control-point-weights': [0.5] },
     },
+    // Cytoscape's built-in press feedback is a dark square; keep it round and light
+    { selector: 'core', style: { 'active-bg-opacity': 0 } as cytoscape.Css.Core },
+    {
+      selector: 'node:active',
+      style: { 'overlay-color': SKY, 'overlay-opacity': 0.14, 'overlay-padding': 6, 'overlay-shape': 'ellipse' },
+    },
+    { selector: 'edge:active', style: { 'overlay-opacity': 0 } },
     { selector: '.hidden', style: { display: 'none' } },
     { selector: 'node.hover', style: { 'border-width': 2, 'border-color': INK } },
     { selector: 'node.dim', style: { opacity: 0.22 } },
@@ -204,6 +211,8 @@
       x: insets.left + pad + width / 2 - zoom * (box.x1 + box.w / 2),
       y: insets.top + pad + height / 2 - zoom * (box.y1 + box.h / 2),
     };
+    // Replace any running camera move instead of queueing after it
+    core.stop(true, false);
     if (animate && !reduceMotion) core.animate({ zoom, pan }, { duration: 550, easing: 'ease-in-out-cubic' });
     else core.viewport({ zoom, pan });
   }
@@ -255,7 +264,35 @@
     }
     if (selection?.kind === 'node') minZoom = 0.55;
     else if (selection) minZoom = core.minZoom();
-    frame(core, focus, { animate, minZoom, anchor });
+    moveCamera(core, focus, { animate, minZoom, anchor });
+  }
+
+  // One selection changes several inputs in quick succession (the selection,
+  // then the size of the panel that opens for it). Coalesce them into a single
+  // camera move, and skip it when the target has not actually changed.
+  let cameraTimer: ReturnType<typeof setTimeout> | undefined;
+  let lastTarget = '';
+
+  function moveCamera(core: Core, focus: cytoscape.Collection, options: Parameters<typeof frame>[2] = {}) {
+    clearTimeout(cameraTimer);
+    const target = [
+      focus.map((element) => element.id()).sort().join(),
+      app.layout,
+      insets.top,
+      insets.right,
+      insets.bottom,
+      insets.left,
+    ].join('|');
+    if (target === lastTarget) return;
+    if (options.animate === false) {
+      lastTarget = target;
+      frame(core, focus, options);
+      return;
+    }
+    cameraTimer = setTimeout(() => {
+      lastTarget = target;
+      frame(core, focus, options);
+    }, 80);
   }
 
   onMount(() => {
@@ -301,6 +338,7 @@
 
     return () => {
       disposed = true;
+      clearTimeout(cameraTimer);
       cy?.destroy();
     };
   });

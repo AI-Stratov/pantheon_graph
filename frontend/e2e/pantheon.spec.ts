@@ -74,3 +74,42 @@ test('separate lineages are reported, not hidden', async ({ page }) => {
   await page.goto('/?from=eris&to=zeus');
   await expect(page.getByTestId('connection-card')).toContainText('are not related');
 });
+
+/** Counts camera animations started on the Cytoscape core behind the canvas. */
+async function watchCamera(page: Page) {
+  await page.waitForFunction(() => document.querySelector('.canvas canvas'));
+  await page.waitForTimeout(400);
+  await page.evaluate(() => {
+    type Core = { animate: (...args: unknown[]) => unknown };
+    const holder = document.querySelector('.canvas') as unknown as { _cyreg: { cy: Core } };
+    const cy = holder._cyreg.cy;
+    const w = window as unknown as { cameraMoves: number };
+    w.cameraMoves = 0;
+    const animate = cy.animate.bind(cy);
+    cy.animate = (...args: unknown[]) => {
+      w.cameraMoves += 1;
+      return animate(...args);
+    };
+  });
+  return {
+    moves: () => page.evaluate(() => (window as unknown as { cameraMoves: number }).cameraMoves),
+  };
+}
+
+test('one selection moves the camera once', async ({ page }) => {
+  await page.goto('/');
+  const camera = await watchCamera(page);
+
+  await pick(page, 'search', 'athe', 'Athena');
+  await expect(page.getByTestId('deity-card')).toBeVisible();
+  await page.waitForTimeout(800);
+  expect(await camera.moves()).toBe(1);
+
+  await page.getByTestId('deity-card').getByRole('button', { name: 'Metis' }).click();
+  await page.waitForTimeout(800);
+  expect(await camera.moves()).toBe(2);
+
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(800);
+  expect(await camera.moves()).toBe(3);
+});

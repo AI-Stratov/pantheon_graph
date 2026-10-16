@@ -22,8 +22,12 @@ export const KINDS: Record<string, KindStyle> = {
 
 const FALLBACK: KindStyle = { label: 'Figure', plural: 'Other', color: '#8f877a', size: 34 };
 
+// Older datasets (and databases seeded from them) split deities by gender
+const LEGACY_KINDS: Record<string, string> = { god: 'deity', goddess: 'deity' };
+
 export function kindStyle(kind: string | null): KindStyle {
-  return (kind && KINDS[kind]) || FALLBACK;
+  if (!kind) return FALLBACK;
+  return KINDS[kind] ?? KINDS[LEGACY_KINDS[kind] ?? ''] ?? FALLBACK;
 }
 
 export const RELATIONS: Record<string, { label: string; color: string; dash: 'solid' | 'dashed' | 'dotted' }> = {
