@@ -7,6 +7,7 @@
   import type { Pantheon, Path } from '../lib/graph';
   import { describeStep, roleLabel } from '../lib/kinship';
   import { withSeed } from '../lib/random';
+  import { type Box, separate } from '../lib/separate';
   import type { AppState, Layout } from '../lib/state.svelte';
   import type { Insets } from '../lib/types';
   import { kindStyle, medallionSvg, RELATIONS, RELATION_FALLBACK } from '../lib/theme';
@@ -27,10 +28,51 @@
   const LABEL_FONT = '"Cormorant Garamond Variable", Georgia, serif';
   const UI_FONT = '"Inter Variable", system-ui, sans-serif';
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // Beyond this many relatives the role captions would cover each other
-  const MAX_PINNED_CAPTIONS = 9;
+  // Room reserved under each name for the relative's role while a node is selected
+  const ROLE_ROOM = 24;
 
   let container: HTMLDivElement;
+
+  interface RoleTag {
+    id: string;
+    text: string;
+    x: number;
+    y: number;
+    size: number;
+  }
+
+  let roleTexts = $state.raw(new Map<string, string>());
+  let roleTags = $state.raw<RoleTag[]>([]);
+  let roleFrame = 0;
+
+  /** Place the role tags under their nodes' names, in screen coordinates. */
+  function placeRoles() {
+    roleFrame = 0;
+    const core = cy;
+    // Hidden together with the names when zoomed too far out to read them
+    if (!core || roleTexts.size === 0 || core.zoom() * 15 < 8) {
+      roleTags = [];
+      return;
+    }
+    const zoom = core.zoom();
+    // Scale with the names on the canvas so the tag fits the room reserved for it
+    const size = Math.min(Math.max(13 * zoom, 9), 13);
+    roleTags = [...roleTexts].map(([id, text]) => {
+      const node = core.$id(id);
+      const { x, y } = node.renderedPosition();
+      // below the medallion and the name drawn under it
+      return { id, text, x, y: y + node.renderedHeight() / 2 + zoom * 25, size };
+    });
+  }
+
+  function scheduleRoles() {
+    if (!roleFrame) roleFrame = requestAnimationFrame(placeRoles);
+  }
+
+  $effect(() => {
+    void roleTexts;
+    scheduleRoles();
+  });
   let cy = $state.raw<Core | null>(null);
   const layouts = new Map<Layout, Record<string, Point>>();
 
@@ -169,14 +211,29 @@
           nodeDimensionsIncludeLabels: true,
           packComponents: true,
           nodeRepulsion: () => 16000,
-          idealEdgeLength: (edge: EdgeSingular) => (edge.data('kind') === 'parent' ? 95 : 70),
+          idealEdgeLength: (edge: EdgeSingular) => (edge.data('kind') === 'parent' ? 100 : 110),
           edgeElasticity: () => 0.35,
           gravity: 0.3,
           numIter: 4000,
         } as cytoscape.LayoutOptions)
         .run(),
     );
-    return Object.fromEntries(core.nodes().map((node) => [node.id(), { ...node.position() }]));
+    // Couples with many children end up on top of each other: push every
+    // medallion and its name clear of its neighbours
+    const boxes: Box[] = core.nodes().map((node) => {
+      const box = node.boundingBox({ includeLabels: true });
+      // Extend each box downwards so a role tag under the name never touches a neighbour
+      return { id: node.id(), x: (box.x1 + box.x2) / 2, y: (box.y1 + box.y2 + ROLE_ROOM) / 2, width: box.w, height: box.h + ROLE_ROOM };
+    });
+    const separated = separate(boxes, 10);
+    return Object.fromEntries(
+      core.nodes().map((node) => {
+        const box = boxes.find((candidate) => candidate.id === node.id())!;
+        const moved = separated.get(node.id())!;
+        const { x, y } = node.position();
+        return [node.id(), { x: x + moved.x - box.x, y: y + moved.y - box.y }];
+      }),
+    );
   }
 
   function positionsFor(core: Core, layout: Layout): Record<string, Point> {
@@ -220,9 +277,10 @@
   function highlight(core: Core, animate = true) {
     const selection = app.selection;
     core.batch(() => {
-      core.elements().removeClass('dim focus onpath captioned hover-caption');
+      core.elements().removeClass('dim focus onpath captioned');
       core.edges().data('caption', '');
     });
+    roleTexts = new Map();
 
     let focus = core.elements().not('.hidden');
     let anchor: cytoscape.Collection | undefined;
@@ -234,13 +292,14 @@
       core.batch(() => {
         core.elements().not(focus).addClass('dim');
         node.addClass('focus');
-        const pin = focus.edges().length <= MAX_PINNED_CAPTIONS;
+        // Each relative's role is shown under its name by the HTML overlay
+        const roles = new Map<string, string[]>();
         focus.edges().forEach((edge) => {
           const other = edge.source().id() === selection.id ? edge.target().id() : edge.source().id();
           const data = pantheon.edges.find((candidate) => candidate.id === edge.id())!;
-          edge.data('caption', roleLabel(data, pantheon.node(other)));
-          if (pin) edge.addClass('captioned');
+          roles.set(other, [...(roles.get(other) ?? []), roleLabel(data, pantheon.node(other))]);
         });
+        roleTexts = new Map([...roles].map(([id, words]) => [id, [...new Set(words)].join(' · ')]));
       });
     } else if (selection?.kind === 'path' && path) {
       const ids = new Set([...path.nodes.map((node) => node.id), ...path.edges.map((edge) => edge.id)]);
@@ -321,24 +380,20 @@
       });
       core.on('mouseover', 'node', (event) => {
         event.target.addClass('hover');
-        event.target.connectedEdges('[caption != ""]').addClass('captioned hover-caption');
         container.style.cursor = 'pointer';
       });
       core.on('mouseout', 'node', (event) => {
         event.target.removeClass('hover');
-        core.edges('.hover-caption').not('.onpath').removeClass('captioned hover-caption');
         container.style.cursor = '';
-        if (app.selection?.kind === 'node') {
-          const hood = core.$id(app.selection.id).connectedEdges();
-          if (hood.length <= MAX_PINNED_CAPTIONS) hood.addClass('captioned');
-        }
       });
+      core.on('viewport position', scheduleRoles);
       cy = core;
     });
 
     return () => {
       disposed = true;
       clearTimeout(cameraTimer);
+      cancelAnimationFrame(roleFrame);
       cy?.destroy();
     };
   });
@@ -384,10 +439,36 @@
 </script>
 
 <div class="canvas" bind:this={container} role="img" aria-label="Map of the Greek pantheon. Use the search or the cards to explore it."></div>
+<div class="roles" aria-hidden="true">
+  {#each roleTags as tag (tag.id)}
+    <span style:transform="translate({tag.x}px, {tag.y}px) translate(-50%, 0)" style:font-size="{tag.size}px">{tag.text}</span>
+  {/each}
+</div>
 
 <style>
-  .canvas {
+  .canvas,
+  .roles {
     position: absolute;
     inset: 0;
+  }
+
+  .roles {
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .roles span {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 0 0.6em;
+    border-radius: 999px;
+    background: var(--sky-soft);
+    color: var(--sky);
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 600;
+    line-height: 1.35;
+    white-space: nowrap;
   }
 </style>
