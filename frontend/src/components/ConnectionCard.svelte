@@ -41,7 +41,7 @@
     <ol class="timeline">
       {#each path!.nodes as node, index (node.id)}
         {@const edge = path!.edges[index]}
-        <li class="person" style:--i={index * 2}>
+        <li class="person">
           <button type="button" onclick={() => onselect(node.id)}>
             <Medallion {node} size={44} />
             <span class="who">
@@ -51,7 +51,7 @@
           </button>
         </li>
         {#if edge}
-          <li class="link" style:--i={index * 2 + 1}><span>{describeStep(edge, node)}</span></li>
+          <li class="link"><span>{describeStep(edge, node)}</span></li>
         {/if}
       {/each}
     </ol>
@@ -69,8 +69,8 @@
 
 <style>
   .sentence {
-    margin: 10px 30px 6px 0;
-    font: 500 28px/1.2 var(--font-serif);
+    margin: 8px 30px 6px 0;
+    font: 500 27px/1.2 var(--font-serif);
   }
 
   .sentence em {
@@ -79,7 +79,7 @@
   }
 
   .sentence strong {
-    color: var(--gold-bright);
+    color: var(--sky);
     font-style: italic;
     font-weight: 600;
   }
@@ -87,23 +87,23 @@
   .meta {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin: 0 0 22px;
+    gap: 12px;
+    margin: 0 0 20px;
     color: var(--ink-muted);
     font-size: 14px;
   }
 
   .swap {
     padding: 3px 10px;
-    border: 1px solid var(--line);
+    border: 1px solid var(--line-strong);
     border-radius: 999px;
-    background: none;
+    background: var(--surface);
     color: var(--ink-soft);
     font-size: 12px;
   }
 
   .swap:hover {
-    border-color: var(--line-strong);
+    background: var(--surface-sunk);
   }
 
   .timeline {
@@ -113,21 +113,19 @@
     list-style: none;
   }
 
-  /* The golden thread running through the medallions */
+  /* The thread running through the medallions */
   .timeline::before {
     content: '';
     position: absolute;
-    top: 26px;
-    bottom: 26px;
+    top: 24px;
+    bottom: 24px;
     left: 25px;
     width: 2px;
-    background: linear-gradient(var(--gold), rgb(217 180 90 / 0.25));
+    background: var(--line-strong);
   }
 
   .timeline li {
     position: relative;
-    animation: rise 0.45s var(--ease) both;
-    animation-delay: calc(var(--i) * 70ms);
   }
 
   .person button {
@@ -137,13 +135,13 @@
     width: 100%;
     padding: 4px;
     border: none;
-    border-radius: 999px 14px 14px 999px;
+    border-radius: 999px 12px 12px 999px;
     background: none;
     text-align: left;
   }
 
   .person button:hover {
-    background: rgb(217 180 90 / 0.08);
+    background: var(--surface-sunk);
   }
 
   .who {
@@ -160,23 +158,11 @@
   }
 
   .link {
-    padding: 8px 0 8px 66px;
+    padding: 7px 0 7px 64px;
   }
 
   .link span {
-    display: inline-block;
-    padding: 3px 10px;
-    border: 1px solid var(--line-strong);
-    border-radius: 999px;
-    background: var(--night-800);
-    color: var(--gold-bright);
-    font: italic 600 15px/1.2 var(--font-serif);
-  }
-
-  @keyframes rise {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
+    color: var(--sky);
+    font: italic 600 16px/1.2 var(--font-serif);
   }
 </style>

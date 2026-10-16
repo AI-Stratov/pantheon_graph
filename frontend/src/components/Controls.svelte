@@ -54,9 +54,8 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     padding: 3px;
-    border: 1px solid var(--line);
     border-radius: 999px;
-    background: rgb(5 7 15 / 0.5);
+    background: var(--surface-sunk);
   }
 
   .layouts button {
@@ -65,15 +64,14 @@
     border-radius: 999px;
     background: none;
     color: var(--ink-soft);
-    font: 600 11px/1 var(--font-display);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    font-weight: 600;
     white-space: nowrap;
   }
 
   .layouts button.on {
-    background: linear-gradient(180deg, #e9c869, #b8902f);
-    color: #1d1505;
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgb(41 36 30 / 0.12);
   }
 
   .extra {
@@ -106,7 +104,6 @@
     height: 10px;
     border-radius: 50%;
     background: var(--tone);
-    box-shadow: 0 0 8px var(--tone);
   }
 
   .relations {
@@ -125,7 +122,7 @@
   }
 
   .relations input {
-    accent-color: var(--gold);
+    accent-color: var(--sky);
   }
 
   .line {

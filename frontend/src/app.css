@@ -1,39 +1,38 @@
 @import '@fontsource/cinzel/500.css';
-@import '@fontsource/cinzel/700.css';
 @import '@fontsource-variable/cormorant-garamond/wght.css';
 @import '@fontsource-variable/cormorant-garamond/wght-italic.css';
 @import '@fontsource-variable/eb-garamond/wght.css';
 @import '@fontsource-variable/inter/wght.css';
 
+/*
+ * Daylight on the Acropolis: limestone and marble, Aegean sky, olive and
+ * terracotta. Flat surfaces, hairline borders, no glow.
+ */
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  --night-950: #05070f;
-  --night-900: #0a0f1e;
-  --night-800: #10172b;
-  --night-700: #172038;
-  --night-600: #222d4a;
-  --line: rgb(217 180 90 / 0.18);
-  --line-strong: rgb(217 180 90 / 0.4);
+  --bg: #f2ede4;
+  --surface: #fbf9f4;
+  --surface-sunk: #ece5d8;
+  --line: #e0d7c7;
+  --line-strong: #c8bba5;
 
-  --ink: #efe7d3;
-  --ink-soft: #c9c0aa;
-  --ink-muted: #8f8a7c;
-  --gold: #d9b45a;
-  --gold-bright: #f3d98f;
+  --ink: #29241e;
+  --ink-soft: #564e43;
+  --ink-muted: #887f71;
 
-  --panel: rgb(14 20 38 / 0.82);
-  --panel-solid: #0f1629;
-  --shadow: 0 18px 48px rgb(0 0 0 / 0.45), 0 2px 8px rgb(0 0 0 / 0.3);
-  --radius: 18px;
+  --sky: #2f5d8a;
+  --sky-soft: #e4ebf2;
+  --terracotta: #b0623b;
+
+  --shadow: 0 1px 2px rgb(41 36 30 / 0.06), 0 6px 20px rgb(41 36 30 / 0.07);
+  --radius: 14px;
   --radius-sm: 10px;
 
-  --font-display: 'Cinzel', 'Trajan Pro', Georgia, serif;
+  --font-display: 'Cinzel', Georgia, serif;
   /* EB Garamond covers polytonic Greek, which Cormorant lacks */
   --font-serif: 'Cormorant Garamond Variable', 'EB Garamond Variable', Georgia, serif;
-  --font-ui: 'Inter Variable', 'Inter', system-ui, sans-serif;
-
-  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --font-ui: 'Inter Variable', system-ui, sans-serif;
 }
 
 *,
@@ -51,32 +50,10 @@ body,
 
 body {
   overflow: hidden;
-  background:
-    radial-gradient(ellipse 80% 60% at 70% 10%, rgb(66 55 140 / 0.35), transparent 60%),
-    radial-gradient(ellipse 60% 50% at 10% 90%, rgb(25 70 90 / 0.3), transparent 60%),
-    var(--night-950);
+  background: var(--bg);
   color: var(--ink);
   font: 15px/1.5 var(--font-ui);
   -webkit-font-smoothing: antialiased;
-}
-
-/* A sparse, fixed star field behind the canvas */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.55;
-  background-image:
-    radial-gradient(1px 1px at 12% 18%, #fff 50%, transparent 51%),
-    radial-gradient(1px 1px at 72% 34%, #fff 50%, transparent 51%),
-    radial-gradient(1.5px 1.5px at 41% 76%, #f7e7b6 50%, transparent 51%),
-    radial-gradient(1px 1px at 86% 82%, #fff 50%, transparent 51%),
-    radial-gradient(1px 1px at 27% 58%, #cfd8ff 50%, transparent 51%),
-    radial-gradient(1.5px 1.5px at 58% 9%, #fff 50%, transparent 51%),
-    radial-gradient(1px 1px at 93% 51%, #f7e7b6 50%, transparent 51%),
-    radial-gradient(1px 1px at 6% 44%, #fff 50%, transparent 51%);
-  background-size: 420px 420px;
 }
 
 button,
@@ -90,12 +67,12 @@ button {
 }
 
 :focus-visible {
-  outline: 2px solid var(--gold-bright);
+  outline: 2px solid var(--sky);
   outline-offset: 2px;
 }
 
 a {
-  color: var(--gold-bright);
+  color: var(--sky);
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
 }
@@ -109,20 +86,18 @@ a {
   white-space: nowrap;
 }
 
-/* Shared surfaces */
 .surface {
-  background: var(--panel);
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(14px) saturate(1.2);
 }
 
 .eyebrow {
   margin: 0;
-  color: var(--gold);
-  font: 600 11px/1.2 var(--font-display);
-  letter-spacing: 0.22em;
+  color: var(--ink-muted);
+  font: 600 11px/1.2 var(--font-ui);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
@@ -130,43 +105,41 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 12px 4px 4px;
+  padding: 3px 12px 3px 3px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.03);
+  background: var(--surface);
   color: var(--ink);
   font-size: 14px;
-  transition: border-color 0.2s, background 0.2s;
 }
 
 .chip:hover {
   border-color: var(--line-strong);
-  background: rgb(217 180 90 / 0.08);
+  background: var(--surface-sunk);
 }
 
-.button-gold {
+.button {
   padding: 10px 18px;
-  border: 1px solid var(--gold);
+  border: none;
   border-radius: 999px;
-  background: linear-gradient(180deg, #e9c869, #b8902f);
-  color: #1d1505;
-  font: 700 12px/1 var(--font-display);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  box-shadow: 0 6px 18px rgb(217 180 90 / 0.25);
+  background: var(--sky);
+  color: #fff;
+  font: 600 14px/1 var(--font-ui);
 }
 
-.button-gold:disabled {
-  opacity: 0.45;
+.button:hover {
+  background: #244c73;
+}
+
+.button:disabled {
+  background: var(--line-strong);
   cursor: not-allowed;
-  box-shadow: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
 }

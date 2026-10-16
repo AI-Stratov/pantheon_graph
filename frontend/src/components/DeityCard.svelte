@@ -32,7 +32,7 @@
   <header>
     <Medallion {node} size={76} />
     <div>
-      <p class="eyebrow" style:color={style.color}>{style.label}</p>
+      <p class="eyebrow">{style.label}</p>
       <h2>{node.label}</h2>
       {#if text(node, 'greek')}<p class="greek" lang="grc">{text(node, 'greek')}</p>{/if}
     </div>
@@ -88,27 +88,25 @@
 <style>
   header {
     display: flex;
-    gap: 18px;
+    gap: 16px;
     align-items: center;
     padding-right: 30px;
   }
 
   h2 {
-    margin: 4px 0 0;
-    font: 700 30px/1.05 var(--font-display);
-    letter-spacing: 0.02em;
+    margin: 2px 0 0;
+    font: 700 32px/1.05 var(--font-serif);
   }
 
   .greek {
     margin: 2px 0 0;
     color: var(--ink-soft);
-    font: italic 500 21px/1.2 var(--font-serif);
+    font: italic 500 20px/1.2 var(--font-serif);
   }
 
   .description {
-    margin: 22px 0 18px;
-    font: 500 20px/1.4 var(--font-serif);
-    color: var(--ink);
+    margin: 20px 0 16px;
+    font: 500 19px/1.45 var(--font-serif);
   }
 
   .facts {
@@ -121,9 +119,6 @@
 
   dt {
     color: var(--ink-muted);
-    font: 600 10.5px/1.9 var(--font-display);
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
   }
 
   dd {
@@ -137,34 +132,32 @@
 
   h3 {
     margin: 0 0 10px;
-    color: var(--ink-soft);
-    font: 600 12px/1 var(--font-display);
-    letter-spacing: 0.16em;
+    color: var(--ink-muted);
+    font: 600 11px/1 var(--font-ui);
+    letter-spacing: 0.14em;
     text-transform: uppercase;
   }
 
   h3 span {
-    color: var(--ink-muted);
-    font-family: var(--font-ui);
     letter-spacing: 0;
   }
 
   .people {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
   .people .chip {
-    font: 600 16px/1 var(--font-serif);
+    font: 700 16px/1 var(--font-serif);
   }
 
   .ask h3 {
+    letter-spacing: 0;
     text-transform: none;
-    letter-spacing: 0.04em;
     font-size: 13px;
   }
 
@@ -172,8 +165,8 @@
     display: flex;
     flex-wrap: wrap;
     gap: 6px 18px;
-    margin-top: 28px;
-    padding-top: 16px;
+    margin-top: 26px;
+    padding-top: 14px;
     border-top: 1px solid var(--line);
     color: var(--ink-muted);
     font-size: 13px;

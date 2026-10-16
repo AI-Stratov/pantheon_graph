@@ -55,6 +55,10 @@
     return [...nodes, ...edges];
   }
 
+  const INK = '#29241e';
+  const BG = '#f2ede4';
+  const SKY = '#2f5d8a';
+
   const style: StylesheetJson = [
     {
       selector: 'node',
@@ -64,36 +68,32 @@
         'background-image': 'data(image)',
         'background-fit': 'cover',
         'background-opacity': 0,
-        'underlay-color': 'data(tone)',
-        'underlay-opacity': 0.14,
-        'underlay-padding': 7,
-        'underlay-shape': 'ellipse',
         label: 'data(label)',
-        color: '#efe7d3',
+        color: INK,
         'font-family': LABEL_FONT,
         'font-size': 15,
         'font-weight': 700,
         'text-valign': 'bottom',
-        'text-margin-y': 6,
-        'text-outline-color': '#05070f',
-        'text-outline-width': 3,
-        'text-outline-opacity': 0.9,
+        'text-margin-y': 5,
+        // Keeps names legible where they cross a line
+        'text-outline-color': BG,
+        'text-outline-width': 2.5,
         'min-zoomed-font-size': 8,
-        'transition-property': 'opacity, underlay-opacity',
-        'transition-duration': 250,
+        'transition-property': 'opacity',
+        'transition-duration': 200,
       },
     },
     {
       selector: 'edge',
       style: {
-        width: 1.4,
+        width: 1.3,
         'line-color': 'data(tone)',
-        'line-opacity': 0.42,
+        'line-opacity': 0.55,
         'line-style': 'data(dash)' as never,
         'line-dash-pattern': [6, 4],
         'curve-style': 'straight',
-        'transition-property': 'opacity, line-opacity, width',
-        'transition-duration': 250,
+        'transition-property': 'opacity',
+        'transition-duration': 200,
       },
     },
     {
@@ -109,41 +109,41 @@
       style: { 'curve-style': 'unbundled-bezier', 'control-point-distances': [-34], 'control-point-weights': [0.5] },
     },
     { selector: '.hidden', style: { display: 'none' } },
-    { selector: 'node.hover', style: { 'underlay-opacity': 0.4 } },
-    { selector: 'node.dim', style: { opacity: 0.16 } },
-    { selector: 'edge.dim', style: { opacity: 0.06 } },
-    { selector: 'node.focus', style: { 'underlay-opacity': 0.55, 'underlay-padding': 12, 'font-size': 18, color: '#f3d98f' } },
+    { selector: 'node.hover', style: { 'border-width': 2, 'border-color': INK } },
+    { selector: 'node.dim', style: { opacity: 0.22 } },
+    { selector: 'edge.dim', style: { opacity: 0.1 } },
+    { selector: 'node.focus', style: { 'border-width': 3, 'border-color': SKY, 'font-size': 17 } },
     {
       selector: 'edge.captioned',
       style: {
         label: 'data(caption)',
-        color: '#efe7d3',
+        color: INK,
         'font-family': UI_FONT,
         'font-size': 10.5,
         'font-weight': 600,
         'text-rotation': 'none',
-        'text-background-color': '#10172b',
-        'text-background-opacity': 0.95,
+        'text-background-color': '#fbf9f4',
+        'text-background-opacity': 1,
         'text-background-padding': '4px',
         'text-background-shape': 'roundrectangle',
-        'text-border-color': '#d9b45a',
-        'text-border-opacity': 0.45,
+        'text-border-color': '#c8bba5',
+        'text-border-opacity': 1,
         'text-border-width': 1,
-        'line-opacity': 0.85,
-        width: 2,
+        'line-opacity': 0.9,
+        width: 1.8,
         'z-index': 10,
       },
     },
-    { selector: 'node.onpath', style: { 'underlay-opacity': 0.5, 'underlay-padding': 11, 'font-size': 17 } },
+    { selector: 'node.onpath', style: { 'border-width': 3, 'border-color': SKY, 'font-size': 16 } },
     {
       selector: 'edge.onpath',
       style: {
-        width: 3.5,
-        'line-color': '#f3d98f',
+        width: 3,
+        'line-color': SKY,
         'line-opacity': 1,
-        'mid-target-arrow-color': '#f3d98f',
-        color: '#1d1505',
-        'text-background-color': '#e9c869',
+        'mid-target-arrow-color': SKY,
+        color: '#fff',
+        'text-background-color': SKY,
         'text-border-width': 0,
         'z-index': 20,
       },
@@ -316,12 +316,6 @@
     if (first || reduceMotion) {
       core.nodes().positions((node) => positions[node.id()]!);
       highlight(core, false);
-      if (first && !reduceMotion) {
-        // Inline styles beat classes, so drop them once the fade-in is done
-        const all = core.elements();
-        all.style('opacity', 0);
-        all.animate({ style: { opacity: 1 } }, { duration: 700, complete: () => all.removeStyle('opacity') });
-      }
     } else {
       core
         .layout({ name: 'preset', positions: (node: cytoscape.NodeSingular) => positions[node.id()]!, animate: true, animationDuration: 650, fit: false } as cytoscape.LayoutOptions)

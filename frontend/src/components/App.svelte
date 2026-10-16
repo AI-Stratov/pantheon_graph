@@ -115,7 +115,7 @@
 
     <div class="dock" bind:clientHeight={dockHeight} class:hidden={mobile && panelOpen}>
       {#if mobile}
-        <button class="button-gold oracle" type="button" onclick={() => (askOpen = true)}>How are they related?</button>
+        <button class="button oracle" type="button" onclick={() => (askOpen = true)}>How are they related?</button>
       {/if}
       <Controls {pantheon} {app} />
     </div>
@@ -145,7 +145,7 @@
     <div class="splash" role="alert">
       <h1>Pantheon</h1>
       <p>{error}</p>
-      <button class="button-gold" type="button" onclick={() => location.reload()}>Try again</button>
+      <button class="button" type="button" onclick={() => location.reload()}>Try again</button>
     </div>
   {:else}
     <div class="splash" aria-busy="true">
@@ -168,7 +168,7 @@
     top: 20px;
     left: 20px;
     display: grid;
-    gap: 16px;
+    gap: 14px;
     width: 340px;
     pointer-events: none;
   }
@@ -179,11 +179,9 @@
 
   .brand h1 {
     margin: 0;
-    color: var(--gold-bright);
-    font: 700 34px/1 var(--font-display);
-    letter-spacing: 0.32em;
+    font: 500 30px/1 var(--font-display);
+    letter-spacing: 0.24em;
     text-transform: uppercase;
-    text-shadow: 0 0 24px rgb(217 180 90 / 0.35);
   }
 
   .brand p {
@@ -210,25 +208,14 @@
 
   .splash h1 {
     margin: 0;
-    color: var(--gold-bright);
-    font: 700 40px/1 var(--font-display);
-    letter-spacing: 0.32em;
+    font: 500 34px/1 var(--font-display);
+    letter-spacing: 0.24em;
     text-transform: uppercase;
   }
 
   .splash p {
     color: var(--ink-soft);
     font: italic 500 20px/1.3 var(--font-serif);
-  }
-
-  .splash[aria-busy='true'] p {
-    animation: breathe 1.6s ease-in-out infinite;
-  }
-
-  @keyframes breathe {
-    50% {
-      opacity: 0.4;
-    }
   }
 
   @media (max-width: 760px) {
@@ -238,11 +225,11 @@
       left: 0;
       width: auto;
       padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
-      background: linear-gradient(rgb(5 7 15 / 0.92), rgb(5 7 15 / 0.75) 70%, transparent);
+      background: linear-gradient(var(--bg) 75%, transparent);
     }
 
     .brand h1 {
-      font-size: 22px;
+      font-size: 21px;
     }
 
     .brand p {
@@ -265,7 +252,8 @@
 
     .oracle {
       padding: 14px;
-      font-size: 13px;
+      font-size: 15px;
+      box-shadow: var(--shadow);
     }
   }
 </style>

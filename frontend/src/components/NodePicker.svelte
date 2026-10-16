@@ -108,24 +108,22 @@
 
   input {
     width: 100%;
-    padding: 11px 16px;
-    border: 1px solid var(--line);
+    padding: 10px 16px;
+    border: 1px solid var(--line-strong);
     border-radius: 999px;
-    background: rgb(5 7 15 / 0.55);
+    background: var(--surface);
     color: var(--ink);
     font-size: 15px;
-    transition: border-color 0.2s, box-shadow 0.2s;
   }
 
   input::placeholder {
     color: var(--ink-muted);
-    font-style: italic;
   }
 
   input:focus {
-    border-color: var(--gold);
+    border-color: var(--sky);
     outline: none;
-    box-shadow: 0 0 0 4px rgb(217 180 90 / 0.15);
+    box-shadow: 0 0 0 3px var(--sky-soft);
   }
 
   .results {
@@ -137,7 +135,6 @@
     margin: 0;
     padding: 6px;
     list-style: none;
-    background: var(--panel-solid);
     border-radius: var(--radius-sm);
   }
 
@@ -153,7 +150,7 @@
   }
 
   li.active {
-    background: rgb(217 180 90 / 0.12);
+    background: var(--sky-soft);
   }
 
   li :global(.medallion) {
@@ -161,7 +158,7 @@
   }
 
   .name {
-    font: 600 17px/1.1 var(--font-serif);
+    font: 700 17px/1.1 var(--font-serif);
   }
 
   .meta {

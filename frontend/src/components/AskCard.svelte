@@ -39,7 +39,7 @@
     <span class="and" aria-hidden="true">&amp;</span>
     <NodePicker {pantheon} label="Second figure" placeholder="…and another" value={to} testid="ask-to" onpick={(node) => (to = node)} />
   </div>
-  <button class="button-gold" type="submit" disabled={!from || !to}>Reveal</button>
+  <button class="button" type="submit" disabled={!from || !to}>Reveal</button>
 
   {#if examples.length}
     <p class="try">or try</p>
@@ -61,8 +61,8 @@
   }
 
   h2 {
-    margin: -4px 0 2px;
-    font: 500 26px/1.15 var(--font-serif);
+    margin: -2px 0 2px;
+    font: 600 26px/1.15 var(--font-serif);
   }
 
   .pickers {
@@ -72,14 +72,14 @@
 
   .and {
     justify-self: center;
-    color: var(--gold);
-    font: italic 500 20px/1 var(--font-serif);
+    color: var(--ink-muted);
+    font: italic 500 18px/1 var(--font-serif);
   }
 
   .try {
     margin: 4px 0 -4px;
     color: var(--ink-muted);
-    font: italic 500 16px/1 var(--font-serif);
+    font-size: 13px;
   }
 
   ul {
@@ -95,17 +95,17 @@
     padding: 5px 12px;
     border: 1px solid var(--line);
     border-radius: 999px;
-    background: rgb(255 255 255 / 0.03);
-    font: 600 15px/1.2 var(--font-serif);
+    background: var(--surface);
+    font: 700 15px/1.2 var(--font-serif);
   }
 
   ul button span {
-    color: var(--gold);
-    font-style: italic;
+    color: var(--ink-muted);
+    font-weight: 500;
   }
 
   ul button:hover {
     border-color: var(--line-strong);
-    background: rgb(217 180 90 / 0.08);
+    background: var(--surface-sunk);
   }
 </style>

@@ -49,15 +49,13 @@
     flex-direction: column;
     width: min(420px, calc(100vw - 32px));
     overflow: hidden;
-    animation: slide-in 0.35s var(--ease) both;
   }
 
   .content {
     flex: 1;
     overflow-y: auto;
-    padding: 28px 26px 32px;
+    padding: 26px 24px 30px;
     overscroll-behavior: contain;
-    scrollbar-color: var(--night-600) transparent;
   }
 
   .close {
@@ -65,30 +63,23 @@
     z-index: 1;
     top: 12px;
     right: 12px;
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     border: 1px solid var(--line);
     border-radius: 50%;
-    background: rgb(5 7 15 / 0.5);
+    background: var(--surface);
     color: var(--ink-soft);
-    font-size: 20px;
+    font-size: 19px;
     line-height: 1;
   }
 
   .close:hover {
-    border-color: var(--line-strong);
+    background: var(--surface-sunk);
     color: var(--ink);
   }
 
   .handle {
     display: none;
-  }
-
-  @keyframes slide-in {
-    from {
-      opacity: 0;
-      transform: translateX(24px);
-    }
   }
 
   @media (max-width: 760px) {
@@ -99,10 +90,9 @@
       left: 0;
       width: 100%;
       max-height: 58dvh;
-      border-radius: var(--radius) var(--radius) 0 0;
       border-bottom: none;
-      animation-name: sheet-in;
-      transition: max-height 0.3s var(--ease);
+      border-radius: var(--radius) var(--radius) 0 0;
+      transition: max-height 0.25s ease;
     }
 
     .panel.expanded {
@@ -118,21 +108,14 @@
     }
 
     .handle span {
-      width: 42px;
+      width: 40px;
       height: 4px;
       border-radius: 2px;
-      background: var(--night-600);
+      background: var(--line-strong);
     }
 
     .content {
       padding: 4px 20px calc(24px + env(safe-area-inset-bottom));
-    }
-
-    @keyframes sheet-in {
-      from {
-        transform: translateY(40%);
-        opacity: 0;
-      }
     }
   }
 </style>

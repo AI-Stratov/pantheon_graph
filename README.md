@@ -5,7 +5,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-Svelte%205-ff3e00)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
-**The family of the Greek gods as a night sky.** Fifty-odd primordials, Titans,
+**The family of the Greek gods, mapped.** Fifty-odd primordials, Titans,
 Olympians, heroes and mortals, every parent, marriage and twin between them —
 and an oracle that tells you how any two of them are related.
 
